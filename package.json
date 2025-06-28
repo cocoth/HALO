@@ -1,13 +1,16 @@
 {
   "name": "halo",
   "version": "1.0.0",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "main": "build/index.js",
+  "types": "build/index.d.ts",
   "scripts": {
-    "build:win": "rmdir /s /q build dist && tsup && xcopy /s /y /I build\\*.d.ts dist\\ && xcopy /s /y /I build\\*.d.mts dist\\ && xcopy /s /y /I build\\*.d.cts dist\\ && javascript-obfuscator build --output dist --rename-globals false",
-    "build:linux": "rm -rf build && tsup && cp -r build/*.d.ts build/*.d.mts build/*.d.cts dist && javascript-obfuscator build --output dist --rename-globals false",
-    "dev:test": "tsx src/test/test.ts",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build-obf:win": "rmdir /s /q build dist && tsup && xcopy /s /y /I build\\*.d.ts dist\\ && xcopy /s /y /I build\\*.d.mts dist\\ && xcopy /s /y /I build\\*.d.cts dist\\ && javascript-obfuscator build --output dist --rename-globals false",
+    "build-obf:linux": "rm -rf build && tsup && cp -r build/*.d.ts build/*.d.mts build/*.d.cts dist && javascript-obfuscator build --output dist --rename-globals false",
+
+    "build:win": "rmdir /s /q build && tsup",
+    "build:linux": "rm -rf build && tsup",
+
+    "dev:test": "tsx src/test/test.ts"
   },
   "keywords": [],
   "author": "cocoth",
