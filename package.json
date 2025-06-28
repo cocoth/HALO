@@ -1,0 +1,30 @@
+{
+  "name": "halo",
+  "version": "1.0.0",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build:win": "rmdir /s /q build dist && tsup && xcopy /s /y /I build\\*.d.ts dist\\ && xcopy /s /y /I build\\*.d.mts dist\\ && xcopy /s /y /I build\\*.d.cts dist\\ && javascript-obfuscator build --output dist --rename-globals false",
+    "build:linux": "rm -rf build && tsup && cp -r build/*.d.ts build/*.d.mts build/*.d.cts dist && javascript-obfuscator build --output dist --rename-globals false",
+    "dev:test": "tsx src/test/test.ts",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "cocoth",
+  "license": "ISC",
+  "description": "Highly Advanced Logical Operator (HALO) is a versatile AI agent designed to assist with various tasks, including web scraping, data analysis, and more. It integrates with multiple AI providers to deliver efficient and intelligent solutions.",
+  "devDependencies": {
+    "@types/node": "^24.0.4",
+    "javascript-obfuscator": "^4.1.1",
+    "tsup": "^8.5.0",
+    "tsx": "^4.20.3",
+    "typescript": "^5.8.3"
+  },
+  "dependencies": {
+    "@ai-sdk/google": "^1.2.19",
+    "@ai-sdk/openai": "^1.3.22",
+    "ai": "^4.3.16",
+    "dotenv": "^16.6.0",
+    "zod": "^3.25.67"
+  }
+}
