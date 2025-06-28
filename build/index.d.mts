@@ -42,8 +42,11 @@ type StartChatStreamResult = {
     response: any;
 };
 /**
- * Represents the result of starting a chat, which can be either a text result or a stream result.
- *
+ * Represents the result of starting a chat, which can be either a text result or a textStream result.
+ * This type is a union of StartChatTextResult and StartChatStreamResult.
+ * It allows for flexibility in handling different types of chat responses.
+ * if you use `streamMethod` as "text", it will return `StartChatTextResult`.
+ * If you use `streamMethod` as "stream", it will return `StartChatStreamResult`.
  * @see StartChatTextResult
  * @see StartChatStreamResult
  */
@@ -106,10 +109,16 @@ interface AiAgentConfig {
      */
     apiKey: string;
     /**
-     * The file path to the system prompt.
-     * If not provided, the system prompt will be empty.
+     * The model ID to use for the AI agent.
+     * It can be a Google Gemini model (e.g., "gemini-1.5-flash") or an OpenAI model (e.g., "gpt-4o").
+     * If not provided, defaults to "gpt-4o".
      */
-    systemPromptFile?: string;
+    model: LooseToStrict<ModelID>;
+    /**
+     * fallbackModel is an model ID that can be used as a fallback
+     * if the primary model fails or is not available.
+     */
+    fallbackModel: LooseToStrict<ModelID>;
     /**
      * The method to use for streaming responses.
      * Can be "stream" for streaming responses or "text" for text responses.
@@ -117,11 +126,10 @@ interface AiAgentConfig {
      */
     streamMethod?: "text" | "stream";
     /**
-     * The model ID to use for the AI agent.
-     * It can be a Google Gemini model (e.g., "gemini-1.5-flash") or an OpenAI model (e.g., "gpt-4o").
-     * If not provided, defaults to "gpt-4o".
-     */
-    model?: LooseToStrict<ModelID>;
+    * The file path to the system prompt.
+    * If not provided, the system prompt will be empty.
+    */
+    systemPromptFile?: string;
     /**
      * A set of tools that the AI agent can use to perform specific tasks.
      * These tools can be used to interact with external services or perform actions.
@@ -139,12 +147,12 @@ declare class AiAgent {
      * The schema for validating the AI agent configuration.
      * It ensures that the required fields are present and correctly formatted.
      */
-    private aiAgentSchema;
     private aiAgentUrl;
     private apiKey;
+    private model;
+    private fallbackModel?;
     private systemPromptFile?;
     private streamMethod;
-    private model;
     private toolSet;
     constructor(config: AiAgentConfig);
     private init;
@@ -225,29 +233,6 @@ declare namespace agent {
 
 declare const TaskHandler: {
     /**
-     * Get weather information for a specified city.
-     * This tool requires the city name to be provided.
-     */
-    getWeather: ai.Tool<z.ZodObject<{
-        city: z.ZodString;
-    }, "strip", z.ZodTypeAny, {
-        city: string;
-    }, {
-        city: string;
-    }>, {
-        city: string;
-        temperature: string;
-        condition: string;
-    }> & {
-        execute: (args: {
-            city: string;
-        }, options: ai.ToolExecutionOptions) => PromiseLike<{
-            city: string;
-            temperature: string;
-            condition: string;
-        }>;
-    };
-    /**
      * Get the current date and time in real-time.
      * This tool does not require any parameters. It returns the current time in a standard format.
      */
@@ -261,17 +246,6 @@ declare class Tools {
      * This tool does not require any parameters.
      */
     static getCurrentTime(): Promise<string>;
-    /**
-     * Retrieves weather information for a specified city.
-     * This tool requires the city name to be provided.
-     */
-    static getWeather({ city }: {
-        city: string;
-    }): Promise<{
-        city: string;
-        temperature: string;
-        condition: string;
-    }>;
 }
 
 declare const tools_TaskHandler: typeof TaskHandler;

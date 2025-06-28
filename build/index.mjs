@@ -147,7 +147,6 @@ import {
   generateText,
   streamText
 } from "ai";
-import { z as z2 } from "zod";
 
 // src/lib/iof.ts
 var iof_exports = {};
@@ -435,17 +434,6 @@ import { tool } from "ai";
 import { z } from "zod";
 var TaskHandler = {
   /**
-   * Get weather information for a specified city.
-   * This tool requires the city name to be provided.
-   */
-  getWeather: tool({
-    description: "Get weather information for a specified city.",
-    parameters: z.object({
-      city: z.string().min(1, "City is required").describe("Name of the city to get weather information for")
-    }),
-    execute: async ({ city }) => await Tools.getWeather({ city })
-  }),
-  /**
    * Get the current date and time in real-time.
    * This tool does not require any parameters. It returns the current time in a standard format.
    */
@@ -464,22 +452,6 @@ var Tools = class {
     Logger.info("Retrieving current time...");
     return Time.getCurrentTimeToHumanReadable();
   }
-  /**
-   * Retrieves weather information for a specified city.
-   * This tool requires the city name to be provided.
-   */
-  static async getWeather({ city }) {
-    if (!city) {
-      throw new Error("City must be provided.");
-    }
-    Logger.info(`Retrieving weather for city: ${city}`);
-    const weather = {
-      city,
-      temperature: "25\xB0C",
-      condition: "Sunny"
-    };
-    return weather;
-  }
 };
 
 // src/core/agent.ts
@@ -488,47 +460,34 @@ var AiAgent = class {
    * The schema for validating the AI agent configuration.
    * It ensures that the required fields are present and correctly formatted.
    */
-  aiAgentSchema = z2.object({
-    agentUrl: z2.string().min(1, "Agent URL is required"),
-    apiKey: z2.string().min(1, "API key is required"),
-    systemPromptFile: z2.string().optional(),
-    streamMethod: z2.enum(["stream", "text"]).optional(),
-    model: z2.union([
-      z2.string().refine((val) => val.startsWith("gpt-"), {
-        message: "Invalid OpenAI model ID"
-      }),
-      z2.string().refine((val) => val.startsWith("gemini-"), {
-        message: "Invalid Google model ID"
-      })
-    ]).optional(),
-    saveSession: z2.boolean().optional(),
-    tools: z2.record(z2.any()).optional()
-  });
   aiAgentUrl;
   apiKey;
+  model;
+  fallbackModel;
   systemPromptFile;
   streamMethod = "text";
-  model;
   toolSet = {
     getCurrentTime: TaskHandler.getCurrentTime
   };
   constructor(config) {
     try {
-      const parsedConfig = this.aiAgentSchema.parse(config);
-      this.aiAgentUrl = parsedConfig.agentUrl;
-      this.apiKey = parsedConfig.apiKey;
-      this.systemPromptFile = parsedConfig.systemPromptFile;
-      this.streamMethod = parsedConfig.streamMethod || "text";
+      this.aiAgentUrl = config.agentUrl;
+      this.apiKey = config.apiKey;
+      this.streamMethod = config.streamMethod || "text";
+      this.systemPromptFile = config.systemPromptFile;
       if (!this.aiAgentUrl || !this.apiKey) {
         throw new Error("Agent URL and API key are required.");
       }
       this.model = this.init({
-        model: parsedConfig.model
+        model: config.model
       });
-      if (parsedConfig.tools) {
+      if (config.fallbackModel) {
+        this.fallbackModel = config.fallbackModel;
+      }
+      if (config.tools) {
         this.toolSet = {
           getCurrentTime: TaskHandler.getCurrentTime,
-          ...parsedConfig.tools
+          ...config.tools
         };
       }
     } catch (error) {
@@ -713,8 +672,7 @@ var AiAgent = class {
       if (error instanceof Error && error.message.includes("Rate limit")) {
         Logger.warn("Rate limit exceeded, switching model...");
         this.model = this.init({
-          model: "gemini-1.5-flash"
-          // Fallback model
+          model: this.fallbackModel
         });
         return await this.startChat({ user, session, prompt });
       }
