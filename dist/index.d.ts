@@ -4,100 +4,93 @@ import { ToolSet, CoreMessage } from 'ai';
 import { google } from '@ai-sdk/google';
 import { z } from 'zod';
 
-declare namespace UserTypes {
-    /**
-     * Represents a user in the system.
-     *   @property name - The name of the user.
-     *   @property username - The username of the user.
-     *   @property email - The email address of the user.
-     *   @property phone - The phone number of the user.
-     */
-    interface userBase {
-        name?: string;
-        username?: string;
-        email?: string;
-        phone?: string;
-    }
+/**
+ * Represents a user in the system.
+ *   @property name - The name of the user.
+ *   @property username - The username of the user.
+ *   @property email - The email address of the user.
+ *   @property phone - The phone number of the user.
+ */
+interface UserBase {
+    name?: string;
+    username?: string;
+    email?: string;
+    phone?: string;
 }
-declare namespace AgentTypes {
-    /**
-     * LooseToStrict is a utility type that converts a type T to a stricter version.
-     * It ensures that if T is a string, it will not be converted to never.
-     */
-    export type LooseToStrict<T> = T extends any ? string extends T ? never : T : never;
-    /**
-     * Represents the result of initiating a chat with a text input.
-     *
-     * @property text - The input text used to start the chat.
-     * @property response - The response received after starting the chat. The type is generic and can vary.
-     */
-    type StartChatTextResult = {
-        text: string;
-        response: any;
-    };
-    /**
-     * Represents the result of starting a chat with text response.
-     *   @property textStream - The generated text response as a stream.
-     *   @property response - Additional response data.
-     */
-    type StartChatStreamResult = {
-        textStream: AsyncIterable<string>;
-        response: any;
-    };
-    /**
-     * Represents the result of starting a chat, which can be either a text result or a stream result.
-     *
-     * @see StartChatTextResult
-     * @see StartChatStreamResult
-     */
-    export type StartChatResult = StartChatTextResult | StartChatStreamResult;
-    export {  };
+/**
+ * LooseToStrict is a utility type that converts a type T to a stricter version.
+ * It ensures that if T is a string, it will not be converted to never.
+ */
+type LooseToStrict<T> = T extends any ? string extends T ? never : T : never;
+/**
+ * Represents the result of initiating a chat with a text input.
+ *
+ * @property text - The input text used to start the chat.
+ * @property response - The response received after starting the chat. The type is generic and can vary.
+ */
+type StartChatTextResult = {
+    text: string;
+    response: any;
+};
+/**
+ * Represents the result of starting a chat with text response.
+ *   @property textStream - The generated text response as a stream.
+ *   @property response - Additional response data.
+ */
+type StartChatStreamResult = {
+    textStream: AsyncIterable<string>;
+    response: any;
+};
+/**
+ * Represents the result of starting a chat, which can be either a text result or a stream result.
+ *
+ * @see StartChatTextResult
+ * @see StartChatStreamResult
+ */
+type StartChatResult = StartChatTextResult | StartChatStreamResult;
+/**
+ * Represents a file with its buffer, name, and path.
+ *  @property file - The file's content as a Buffer.
+ *  @property name - The name of the file.
+ *  @property path - The path where the file is stored.
+ */
+interface FileInterface {
+    file: Buffer;
+    name: string;
+    path: string;
 }
-declare namespace FileTypes {
-    /**
-     * Represents a file with its buffer, name, and path.
-     *  @property file - The file's content as a Buffer.
-     *  @property name - The name of the file.
-     *  @property path - The path where the file is stored.
-     */
-    interface fileInterface {
-        file: Buffer;
-        name: string;
-        path: string;
-    }
-    /**
-     * Represents the metadata of a file stored in the system.
-     *  @property filename - The name of the file.
-     *  @property fileuri - The URI where the file is stored.
-     *  @property filehash - The SHA-256 hash of the file.
-     *  @property filesize - The size of the file in bytes.
-     *  @property filetype - The MIME type of the file.
-     */
-    interface fileStorageInterface {
-        filename: string;
-        fileuri: string;
-        filehash: string;
-        filesize: number;
-        filetype: string;
-    }
-    /**
-     * Represents the data required to download a file from a URL.
-     *   @property fileuri - The URL of the file to download.
-     *   @property saveTo - The local path where the file should be saved.
-     */
-    interface fileDownloadInterface {
-        fileuri: string;
-        saveTo: string;
-    }
-    /**
-     * Represents the data required to upload a file inline.
-     *   @property inlineData - The base64 encoded string of the file content.
-     *   @property mimeType - The MIME type of the file.
-     */
-    interface InlineData {
-        inlineData: string;
-        mimeType: string;
-    }
+/**
+ * Represents the metadata of a file stored in the system.
+ *  @property filename - The name of the file.
+ *  @property fileuri - The URI where the file is stored.
+ *  @property filehash - The SHA-256 hash of the file.
+ *  @property filesize - The size of the file in bytes.
+ *  @property filetype - The MIME type of the file.
+ */
+interface FileStorageInterface {
+    filename: string;
+    fileuri: string;
+    filehash: string;
+    filesize: number;
+    filetype: string;
+}
+/**
+ * Represents the data required to download a file from a URL.
+ *   @property fileuri - The URL of the file to download.
+ *   @property saveTo - The local path where the file should be saved.
+ */
+interface FileDownloadInterface {
+    fileuri: string;
+    saveTo: string;
+}
+/**
+ * Represents the data required to upload a file inline.
+ *   @property inlineData - The base64 encoded string of the file content.
+ *   @property mimeType - The MIME type of the file.
+ */
+interface InlineData {
+    inlineData: string;
+    mimeType: string;
 }
 
 type ModelID = Parameters<typeof google | typeof openai>[0];
@@ -128,7 +121,7 @@ interface AiAgentConfig {
      * It can be a Google Gemini model (e.g., "gemini-1.5-flash") or an OpenAI model (e.g., "gpt-4o").
      * If not provided, defaults to "gpt-4o".
      */
-    model?: AgentTypes.LooseToStrict<ModelID>;
+    model?: LooseToStrict<ModelID>;
     /**
      * A set of tools that the AI agent can use to perform specific tasks.
      * These tools can be used to interact with external services or perform actions.
@@ -202,7 +195,7 @@ declare class AiAgent {
          * This can be a user base object containing user details like name and phone number.
          * If not provided, the chat will not include user-specific information.
          */
-        user?: UserTypes.userBase | null;
+        user?: UserBase | null;
         /**
          * An optional array of previous messages in the chat session.
          * This allows the AI agent to continue the conversation with the existing context.
@@ -220,8 +213,8 @@ declare class AiAgent {
          * This can be an inline data object containing file data and mime type.
          * If not provided, the chat will not include any media.
          */
-        media?: FileTypes.InlineData | null;
-    }): Promise<AgentTypes.StartChatResult>;
+        media?: InlineData | null;
+    }): Promise<StartChatResult>;
 }
 
 type agent_AiAgent = AiAgent;
@@ -322,13 +315,13 @@ declare class IOF {
      * @param data - The file data including the file buffer, name, and path.
      * @returns The full path of the saved file or null if an error occurs.
      */
-    setFileLocation(data: FileTypes.fileInterface): Promise<FileTypes.fileStorageInterface | null>;
+    setFileLocation(data: FileInterface): Promise<FileStorageInterface | null>;
     /**
      * Downloads a file from a given URL and saves it to the specified download path.
      * @param data - The file download data including the file URL and save path.
      * @returns The metadata of the downloaded file.
      */
-    static downloadFile(data: FileTypes.fileDownloadInterface): Promise<FileTypes.fileStorageInterface>;
+    static downloadFile(data: FileDownloadInterface): Promise<FileStorageInterface>;
     /**
      * Retrieves the string content of a text file.
      * @param filePath - The path to the text file.
@@ -461,4 +454,4 @@ declare namespace time {
   export { time_Time as Time };
 }
 
-export { agent as Agent, AgentTypes, colors as Colors, FileTypes, hash as Hash, iof as IOF, logger as Logger, mimeType$1 as MimeType, terminal as Terminal, time as Time, tools as Tools, UserTypes };
+export { agent as Agent, colors as Colors, type FileDownloadInterface, type FileInterface, type FileStorageInterface, hash as Hash, iof as IOF, type InlineData, logger as Logger, type LooseToStrict, mimeType$1 as MimeType, type StartChatResult, terminal as Terminal, time as Time, tools as Tools, type UserBase };
