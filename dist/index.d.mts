@@ -19,40 +19,40 @@ declare namespace UserTypes {
         phone?: string;
     }
 }
-
 declare namespace AgentTypes {
-
     /**
      * LooseToStrict is a utility type that converts a type T to a stricter version.
      * It ensures that if T is a string, it will not be converted to never.
      */
-    type LooseToStrict<T> = T extends any ? string extends T ? never : T : never;
-
+    export type LooseToStrict<T> = T extends any ? string extends T ? never : T : never;
     /**
      * Represents the result of initiating a chat with a text input.
      *
      * @property text - The input text used to start the chat.
      * @property response - The response received after starting the chat. The type is generic and can vary.
      */
-    type StartChatTextResult = { text: string; response: any };
-
+    type StartChatTextResult = {
+        text: string;
+        response: any;
+    };
     /**
      * Represents the result of starting a chat with text response.
      *   @property textStream - The generated text response as a stream.
      *   @property response - Additional response data.
      */
-    type StartChatStreamResult = { textStream: AsyncIterable<string>; response: any };
-
+    type StartChatStreamResult = {
+        textStream: AsyncIterable<string>;
+        response: any;
+    };
     /**
      * Represents the result of starting a chat, which can be either a text result or a stream result.
-     * 
+     *
      * @see StartChatTextResult
      * @see StartChatStreamResult
      */
-    type StartChatResult = StartChatTextResult | StartChatStreamResult;
-
+    export type StartChatResult = StartChatTextResult | StartChatStreamResult;
+    export {  };
 }
-
 declare namespace FileTypes {
     /**
      * Represents a file with its buffer, name, and path.
@@ -65,7 +65,6 @@ declare namespace FileTypes {
         name: string;
         path: string;
     }
-
     /**
      * Represents the metadata of a file stored in the system.
      *  @property filename - The name of the file.
@@ -81,7 +80,6 @@ declare namespace FileTypes {
         filesize: number;
         filetype: string;
     }
-
     /**
      * Represents the data required to download a file from a URL.
      *   @property fileuri - The URL of the file to download.
@@ -91,7 +89,6 @@ declare namespace FileTypes {
         fileuri: string;
         saveTo: string;
     }
-
     /**
      * Represents the data required to upload a file inline.
      *   @property inlineData - The base64 encoded string of the file content.
@@ -464,4 +461,4 @@ declare namespace time {
   export { time_Time as Time };
 }
 
-export { agent as Agent, colors as Colors, hash as Hash, iof as IOF, logger as Logger, mimeType$1 as MimeType, terminal as Terminal, time as Time, tools as Tools };
+export { agent as Agent, AgentTypes, colors as Colors, FileTypes, hash as Hash, iof as IOF, logger as Logger, mimeType$1 as MimeType, terminal as Terminal, time as Time, tools as Tools, UserTypes };
