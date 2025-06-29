@@ -328,11 +328,16 @@ declare class IOF {
      */
     static calculateSizeByBuffer(buffer: Buffer): number;
     /**
-     * Sets the file location by saving the file to the specified path and storing its metadata.
-     * @param data - The file data including the file buffer, name, and path.
-     * @returns The full path of the saved file or null if an error occurs.
+     * Saves a file buffer to the specified file path on disk.
+     *
+     * Calculates the file's hash, size, and MIME type, creates the necessary directories,
+     * and writes the file data to disk. Returns an object containing metadata about the saved file.
+     *
+     * @param data - An object implementing the FileInterface, containing the file data, filename, and target filepath.
+     * @returns A promise that resolves to a FileStorageInterface object with file metadata, or null if saving fails.
+     * @throws {Error} If the file cannot be saved to the specified location.
      */
-    setFileLocation(data: FileInterface): Promise<FileStorageInterface | null>;
+    saveBufferToFile(data: FileInterface): Promise<FileStorageInterface | null>;
     /**
      * Downloads a file from a given URL and saves it to the specified download path.
      * @param data - The file download data including the file URL and save path.
