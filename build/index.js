@@ -97,6 +97,9 @@ var Time = class _Time {
   static formatDateString(dateParts) {
     return `${dateParts.year}-${dateParts.month}-${dateParts.day}T${dateParts.hour}:${dateParts.minute}:${dateParts.second}Z`;
   }
+  static formateDateToSaveString(dateParts) {
+    return `${dateParts.year}-${dateParts.month}-${dateParts.day}T${dateParts.hour}-${dateParts.minute}-${dateParts.second}Z`;
+  }
   static logFormat(dateParts) {
     return `${dateParts.day}/${dateParts.month}/${dateParts.year}:${dateParts.hour}:${dateParts.minute}:${dateParts.second}`;
   }
@@ -104,21 +107,46 @@ var Time = class _Time {
     const dateParts = _Time.formatDateToParts(date, timeZone);
     return `${dateParts.day}/${dateParts.month}/${dateParts.year} ${dateParts.hour}:${dateParts.minute}:${dateParts.second}`;
   }
+  /**
+   * Returns the current time formatted as a string suitable for saving.
+   * This format is `YYYY-MM-DDTHH-MM-SSZ`, which is useful for file naming or database storage.
+   */
+  static getCurrentTimeToSaveString() {
+    const now = /* @__PURE__ */ new Date();
+    const dateParts = _Time.formatDateToParts(now, "Asia/Jakarta");
+    return _Time.formateDateToSaveString(dateParts);
+  }
+  /**
+   * Returns the current time as a Date object.
+   * This method formats the current time to a string and then converts it back to a Date object.
+   */
   static getCurrentTime() {
     const now = /* @__PURE__ */ new Date();
     const dateParts = _Time.formatDateToParts(now, "Asia/Jakarta");
     const formattedDateString = _Time.formatDateString(dateParts);
     return new Date(formattedDateString);
   }
+  /**
+   * Returns the current time formatted as a string.
+   * This format is `YYYY-MM-DDTHH:MM:SSZ`, which is useful for logging or displaying the current time.
+   */
   static getCurrentTimeToString() {
     const now = /* @__PURE__ */ new Date();
     const dateParts = _Time.formatDateToParts(now, "Asia/Jakarta");
     return _Time.formatDateString(dateParts);
   }
+  /**
+   * Returns the current time in a human-readable format.
+   * This format is `DD/MM/YYYY HH:MM:SS`, which is suitable for display to users.
+   */
   static getCurrentTimeToHumanReadable() {
     const now = /* @__PURE__ */ new Date();
     return _Time.formatDateToHumanReadable(now, "Asia/Jakarta");
   }
+  /**
+   * Returns the current time formatted for logging.
+   * This format is `DD/MM/YYYY:HH:MM:SS`, which is useful for log entries.
+   */
   static getTimeToLogFormat() {
     const now = /* @__PURE__ */ new Date();
     const dateParts = _Time.formatDateToParts(now, "Asia/Jakarta");

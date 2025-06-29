@@ -433,11 +433,33 @@ declare namespace terminal {
 declare class Time {
     private static formatDateToParts;
     private static formatDateString;
+    private static formateDateToSaveString;
     private static logFormat;
     static formatDateToHumanReadable(date: Date, timeZone: string): string;
+    /**
+     * Returns the current time formatted as a string suitable for saving.
+     * This format is `YYYY-MM-DDTHH-MM-SSZ`, which is useful for file naming or database storage.
+     */
+    static getCurrentTimeToSaveString(): string;
+    /**
+     * Returns the current time as a Date object.
+     * This method formats the current time to a string and then converts it back to a Date object.
+     */
     static getCurrentTime(): Date;
+    /**
+     * Returns the current time formatted as a string.
+     * This format is `YYYY-MM-DDTHH:MM:SSZ`, which is useful for logging or displaying the current time.
+     */
     static getCurrentTimeToString(): string;
+    /**
+     * Returns the current time in a human-readable format.
+     * This format is `DD/MM/YYYY HH:MM:SS`, which is suitable for display to users.
+     */
     static getCurrentTimeToHumanReadable(): string;
+    /**
+     * Returns the current time formatted for logging.
+     * This format is `DD/MM/YYYY:HH:MM:SS`, which is useful for log entries.
+     */
     static getTimeToLogFormat(): string;
 }
 
