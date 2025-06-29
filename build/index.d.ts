@@ -1,6 +1,7 @@
 import { openai } from '@ai-sdk/openai';
 import * as ai from 'ai';
 import { ToolSet, CoreMessage } from 'ai';
+export { CoreMessage } from 'ai';
 import { google } from '@ai-sdk/google';
 import { z } from 'zod';
 
@@ -16,6 +17,24 @@ interface UserBase {
     username?: string;
     email?: string;
     phone?: string;
+}
+/**
+ * AtLeastOne is a utility type that ensures at least one of the specified keys in T is required.
+ * It allows for flexibility in defining types where at least one property must be present.
+ *
+ * @template T - The type to apply the AtLeastOne constraint to.
+ * @template Keys - The keys of T that are required at least once.
+ */
+type AtLeastOne<T, Keys extends keyof T = keyof T> = Keys extends keyof T ? Required<Pick<T, Keys>> & Partial<Omit<T, Keys>> : never;
+/** * Represents a message to be saved in the database.
+ *   @property role - The role of the message sender (e.g., "user", "assistant").
+ *   @property text - The content of the message.
+ *   @property timestamp - The timestamp of when the message was sent.
+ */
+interface ConversationDB {
+    role: "user" | "assistant";
+    text: string;
+    timestamp: Date;
 }
 /**
  * LooseToStrict is a utility type that converts a type T to a stricter version.
@@ -52,15 +71,15 @@ type StartChatStreamResult = {
  */
 type StartChatResult = StartChatTextResult | StartChatStreamResult;
 /**
- * Represents a file with its buffer, name, and path.
- *  @property file - The file's content as a Buffer.
- *  @property name - The name of the file.
- *  @property path - The path where the file is stored.
+ * Represents a file with its data, name, and path.
+ *   @property filedata - The binary data of the file.
+ *   @property filename - The name of the file.
+ *   @property filepath - The path where the file is stored.
  */
 interface FileInterface {
-    file: Buffer;
-    name: string;
-    path: string;
+    filedata: Buffer;
+    filename: string;
+    filepath: string;
 }
 /**
  * Represents the metadata of a file stored in the system.
@@ -143,10 +162,6 @@ interface AiAgentConfig {
  * The system prompt can be loaded from a specified file.
  */
 declare class AiAgent {
-    /**
-     * The schema for validating the AI agent configuration.
-     * It ensures that the required fields are present and correctly formatted.
-     */
     private aiAgentUrl;
     private apiKey;
     private model;
@@ -272,6 +287,41 @@ declare class IOF {
      * @param dirPath - The path of the directory to create.
      */
     static mkdir(dirPath: string): void;
+    /**
+     * Checks if a file exists at the specified path.
+     * @param filePath - The path to the file.
+     * @returns A boolean indicating whether the file exists.
+     * @throws An error if the existence check fails.
+     */
+    static existsFileSync(filePath: string): boolean;
+    static existsFile(filePath: string): Promise<boolean>;
+    /**
+     * Writes an object to a JSON file, appending it to an existing array if the file already exists.
+     * @param filePath - The path to the JSON file.
+     * @param data - The object to write to the file.
+     * @throws An error if the file cannot be written or if the content is not an array.
+     */
+    static writeJSONFile<T>({ filePath, data }: {
+        filePath: string;
+        data: T;
+    }): Promise<void>;
+    /**
+     * Overwrites a JSON file with a new array of objects.
+     * @param filePath - The path to the JSON file.
+     * @param data - The array of objects to write to the file.
+     * @throws An error if the file cannot be written or if the content is not an array.
+     */
+    static writeJSONFileOverwrite<T>({ filePath, data }: {
+        filePath: string;
+        data: T[];
+    }): Promise<void>;
+    /**
+     * Reads a JSON file and returns its content as an array.
+     * @param filePath - The path to the JSON file.
+     * @returns An array of objects parsed from the JSON file.
+     * @throws An error if the file does not exist or if the content is not an array.
+     */
+    static readJSONFile<T>(filePath: string): Promise<T[]>;
     /**
      * Calculates the SHA-256 hash of a given buffer.
      * @param buffer - The buffer to hash.
@@ -428,4 +478,4 @@ declare namespace time {
   export { time_Time as Time };
 }
 
-export { agent as Agent, colors as Colors, type FileDownloadInterface, type FileInterface, type FileStorageInterface, hash as Hash, iof as IOF, type InlineData, logger as Logger, type LooseToStrict, mimeType$1 as MimeType, type StartChatResult, terminal as Terminal, time as Time, tools as Tools, type UserBase };
+export { agent as Agent, type AtLeastOne, colors as Colors, type ConversationDB, type FileDownloadInterface, type FileInterface, type FileStorageInterface, hash as Hash, iof as IOF, type InlineData, logger as Logger, type LooseToStrict, mimeType$1 as MimeType, type StartChatResult, terminal as Terminal, time as Time, tools as Tools, type UserBase };

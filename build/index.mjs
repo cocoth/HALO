@@ -310,6 +310,88 @@ var IOF = class _IOF {
     }
   }
   /**
+   * Checks if a file exists at the specified path.
+   * @param filePath - The path to the file.
+   * @returns A boolean indicating whether the file exists.
+   * @throws An error if the existence check fails.
+   */
+  static existsFileSync(filePath) {
+    try {
+      return fs.existsSync(filePath);
+    } catch (error) {
+      throw new Error(`Failed to check existence of ${filePath}: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
+  static async existsFile(filePath) {
+    try {
+      return await fs.promises.access(filePath, fs.constants.F_OK).then(() => true).catch(() => false);
+    } catch (error) {
+      throw new Error(`Failed to check existence of ${filePath}: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
+  /**
+   * Writes an object to a JSON file, appending it to an existing array if the file already exists.
+   * @param filePath - The path to the JSON file.
+   * @param data - The object to write to the file.
+   * @throws An error if the file cannot be written or if the content is not an array.
+   */
+  static async writeJSONFile({ filePath, data }) {
+    try {
+      if (!_IOF.existsFileSync(path.dirname(filePath))) {
+        _IOF.mkdir(path.dirname(filePath));
+      }
+      let arrayData = [];
+      if (fs.existsSync(filePath)) {
+        const jsonData = await fs.promises.readFile(filePath, "utf-8");
+        arrayData = JSON.parse(jsonData);
+        if (!Array.isArray(arrayData)) arrayData = [];
+      }
+      arrayData.push(data);
+      const newJsonData = JSON.stringify(arrayData, null, 2);
+      fs.writeFileSync(filePath, newJsonData);
+    } catch (error) {
+      throw new Error(`Failed to write JSON to ${filePath}: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
+  /**
+   * Overwrites a JSON file with a new array of objects.
+   * @param filePath - The path to the JSON file.
+   * @param data - The array of objects to write to the file.
+   * @throws An error if the file cannot be written or if the content is not an array.
+   */
+  static async writeJSONFileOverwrite({ filePath, data }) {
+    try {
+      if (!fs.existsSync(path.dirname(filePath))) {
+        _IOF.mkdir(path.dirname(filePath));
+      }
+      const newJsonData = JSON.stringify(data, null, 2);
+      await fs.promises.writeFile(filePath, newJsonData);
+    } catch (error) {
+      throw new Error(`Failed to overwrite JSON to ${filePath}: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
+  /**
+   * Reads a JSON file and returns its content as an array.
+   * @param filePath - The path to the JSON file.
+   * @returns An array of objects parsed from the JSON file.
+   * @throws An error if the file does not exist or if the content is not an array.
+   */
+  static async readJSONFile(filePath) {
+    try {
+      if (!fs.existsSync(filePath)) {
+        throw new Error(`File not found: ${filePath}`);
+      }
+      const jsonData = await fs.promises.readFile(filePath, "utf-8");
+      const arr = JSON.parse(jsonData);
+      if (!Array.isArray(arr)) {
+        throw new Error(`File content is not an array: ${filePath}`);
+      }
+      return arr;
+    } catch (error) {
+      throw new Error(`Failed to read JSON from ${filePath}: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
+  /**
    * Calculates the SHA-256 hash of a given buffer.
    * @param buffer - The buffer to hash.
    * @returns The SHA-256 hash as a hexadecimal string.
@@ -343,16 +425,16 @@ var IOF = class _IOF {
    * @returns The full path of the saved file or null if an error occurs.
    */
   async setFileLocation(data) {
-    const hash = _IOF.calculateHashByBuffer(Buffer.from(data.file));
-    const size = _IOF.calculateSizeByBuffer(Buffer.from(data.file));
-    const type = mimeType(data.name);
+    const hash = _IOF.calculateHashByBuffer(Buffer.from(data.filedata));
+    const size = _IOF.calculateSizeByBuffer(Buffer.from(data.filedata));
+    const type = mimeType(data.filename);
     try {
-      const fullPath = path.join(process.cwd(), data.path, data.name);
+      const fullPath = path.join(process.cwd(), data.filepath, data.filename);
       const dir = path.dirname(fullPath);
       _IOF.mkdir(dir);
-      await fs.promises.writeFile(fullPath, data.file);
+      await fs.promises.writeFile(fullPath, data.filedata);
       return {
-        filename: data.name,
+        filename: data.filename,
         fileuri: fullPath,
         filehash: hash,
         filesize: size,
@@ -456,10 +538,6 @@ var Tools = class {
 
 // src/core/agent.ts
 var AiAgent = class {
-  /**
-   * The schema for validating the AI agent configuration.
-   * It ensures that the required fields are present and correctly formatted.
-   */
   aiAgentUrl;
   apiKey;
   model;
@@ -755,9 +833,13 @@ function ParseEnvKeys(prefix) {
   });
   return { keys, values };
 }
+
+// index.ts
+import { CoreMessage as CoreMessage2 } from "ai";
 export {
   agent_exports as Agent,
   colors_exports as Colors,
+  CoreMessage2 as CoreMessage,
   hash_exports as Hash,
   iof_exports as IOF,
   logger_exports as Logger,
