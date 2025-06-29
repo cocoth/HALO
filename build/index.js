@@ -32,18 +32,14 @@ var index_exports = {};
 __export(index_exports, {
   AgentSession: () => AgentSession,
   AiAgent: () => AiAgent,
-  ClearTerminal: () => ClearTerminal,
-  CloseTerminal: () => CloseTerminal,
   CoreMessage: () => import_ai3.CoreMessage,
   GenerateRandomString: () => GenerateRandomString,
   GenerateUUID: () => GenerateUUID,
   HashWithSHA256: () => HashWithSHA256,
-  Help: () => Help,
   IOF: () => IOF,
   Logger: () => Logger,
-  ParseEnvKeys: () => ParseEnvKeys,
-  Question: () => Question,
   TaskHandler: () => TaskHandler,
+  Terminal: () => terminal_exports,
   Time: () => Time,
   Tools: () => Tools,
   mimeType: () => mimeType,
@@ -791,6 +787,14 @@ function GenerateRandomString(length) {
 }
 
 // src/utils/terminal.ts
+var terminal_exports = {};
+__export(terminal_exports, {
+  ClearTerminal: () => ClearTerminal,
+  CloseTerminal: () => CloseTerminal,
+  Help: () => Help,
+  ParseEnvKeys: () => ParseEnvKeys,
+  Question: () => Question
+});
 var rl = __toESM(require("readline/promises"));
 var import_dotenv = __toESM(require("dotenv"));
 import_dotenv.default.config();
@@ -1063,18 +1067,14 @@ var import_ai3 = require("ai");
 0 && (module.exports = {
   AgentSession,
   AiAgent,
-  ClearTerminal,
-  CloseTerminal,
   CoreMessage,
   GenerateRandomString,
   GenerateUUID,
   HashWithSHA256,
-  Help,
   IOF,
   Logger,
-  ParseEnvKeys,
-  Question,
   TaskHandler,
+  Terminal,
   Time,
   Tools,
   mimeType,

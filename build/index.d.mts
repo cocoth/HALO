@@ -416,6 +416,15 @@ declare function ParseEnvKeys(prefix: string): {
     values: string[];
 };
 
+declare const terminal_ClearTerminal: typeof ClearTerminal;
+declare const terminal_CloseTerminal: typeof CloseTerminal;
+declare const terminal_Help: typeof Help;
+declare const terminal_ParseEnvKeys: typeof ParseEnvKeys;
+declare const terminal_Question: typeof Question;
+declare namespace terminal {
+  export { terminal_ClearTerminal as ClearTerminal, terminal_CloseTerminal as CloseTerminal, terminal_Help as Help, terminal_ParseEnvKeys as ParseEnvKeys, terminal_Question as Question };
+}
+
 declare class Time {
     private static formatDateToParts;
     private static formatDateString;
@@ -516,4 +525,4 @@ declare class AgentSession {
     private resumeJSONFileSession;
 }
 
-export { AgentSession, AiAgent, type AtLeastOne, ClearTerminal, CloseTerminal, type ConversationDB, type FileDownloadInterface, type FileInterface, type FileStorageInterface, GenerateRandomString, GenerateUUID, HashWithSHA256, Help, IOF, type InlineData, Logger, type LooseToStrict, ParseEnvKeys, Question, type StartChatResult, TaskHandler, Time, Tools, type UserBase, mimeType, terminalColors };
+export { AgentSession, AiAgent, type AtLeastOne, type ConversationDB, type FileDownloadInterface, type FileInterface, type FileStorageInterface, GenerateRandomString, GenerateUUID, HashWithSHA256, IOF, type InlineData, Logger, type LooseToStrict, type StartChatResult, TaskHandler, terminal as Terminal, Time, Tools, type UserBase, mimeType, terminalColors };

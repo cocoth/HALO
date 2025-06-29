@@ -1,3 +1,9 @@
+var __defProp = Object.defineProperty;
+var __export = (target, all) => {
+  for (var name in all)
+    __defProp(target, name, { get: all[name], enumerable: true });
+};
+
 // src/utils/colors.ts
 var terminalColors = {
   reset: "\x1B[0m",
@@ -741,6 +747,14 @@ function GenerateRandomString(length) {
 }
 
 // src/utils/terminal.ts
+var terminal_exports = {};
+__export(terminal_exports, {
+  ClearTerminal: () => ClearTerminal,
+  CloseTerminal: () => CloseTerminal,
+  Help: () => Help,
+  ParseEnvKeys: () => ParseEnvKeys,
+  Question: () => Question
+});
 import * as rl from "readline/promises";
 import dotenv from "dotenv";
 dotenv.config();
@@ -1012,18 +1026,14 @@ import { CoreMessage as CoreMessage2 } from "ai";
 export {
   AgentSession,
   AiAgent,
-  ClearTerminal,
-  CloseTerminal,
   CoreMessage2 as CoreMessage,
   GenerateRandomString,
   GenerateUUID,
   HashWithSHA256,
-  Help,
   IOF,
   Logger,
-  ParseEnvKeys,
-  Question,
   TaskHandler,
+  terminal_exports as Terminal,
   Time,
   Tools,
   mimeType,
