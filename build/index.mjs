@@ -414,10 +414,7 @@ var IOF = class _IOF {
     try {
       const fullPath = path.resolve(process.cwd(), data.filepath, data.filename);
       const dir = path.dirname(fullPath);
-      if (!fs.existsSync(dir)) {
-        Logger.info(`Creating directory: ${dir}`);
-        _IOF.mkdir(dir);
-      }
+      _IOF.mkdir(dir);
       await fs.promises.writeFile(fullPath, data.filedata);
       return {
         filename: data.filename,
