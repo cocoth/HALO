@@ -412,9 +412,12 @@ var IOF = class _IOF {
     const size = _IOF.calculateSizeByBuffer(Buffer.from(data.filedata));
     const type = mimeType(data.filename);
     try {
-      const fullPath = path.resolve(data.filepath, data.filename);
+      const fullPath = path.resolve(process.cwd(), data.filepath, data.filename);
       const dir = path.dirname(fullPath);
-      _IOF.mkdir(dir);
+      if (!fs.existsSync(dir)) {
+        Logger.info(`Creating directory: ${dir}`);
+        _IOF.mkdir(dir);
+      }
       await fs.promises.writeFile(fullPath, data.filedata);
       return {
         filename: data.filename,
