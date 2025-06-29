@@ -414,7 +414,10 @@ var IOF = class _IOF {
     try {
       const fullPath = path.join(data.filepath, data.filename);
       const dir = path.dirname(fullPath);
+      Logger.info(`Target fullPath: ${fullPath}`);
+      Logger.info(`Ensuring directory exists: ${dir}`);
       _IOF.mkdir(dir);
+      Logger.info(`Directory ensured, writing file...`);
       await fs.promises.writeFile(fullPath, data.filedata);
       return {
         filename: data.filename,
