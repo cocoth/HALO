@@ -240,12 +240,6 @@ declare class AiAgent {
     }): Promise<StartChatResult>;
 }
 
-type agent_AiAgent = AiAgent;
-declare const agent_AiAgent: typeof AiAgent;
-declare namespace agent {
-  export { agent_AiAgent as AiAgent };
-}
-
 declare const TaskHandler: {
     /**
      * Get the current date and time in real-time.
@@ -261,13 +255,6 @@ declare class Tools {
      * This tool does not require any parameters.
      */
     static getCurrentTime(): Promise<string>;
-}
-
-declare const tools_TaskHandler: typeof TaskHandler;
-type tools_Tools = Tools;
-declare const tools_Tools: typeof Tools;
-declare namespace tools {
-  export { tools_TaskHandler as TaskHandler, tools_Tools as Tools };
 }
 
 /** IOF (Input/Output File) class for handling file operations
@@ -294,6 +281,12 @@ declare class IOF {
      * @throws An error if the existence check fails.
      */
     static existsFileSync(filePath: string): boolean;
+    /**
+     * Asynchronously checks if a file exists at the specified path.
+     * @param filePath - The path to the file.
+     * @returns A promise that resolves to a boolean indicating whether the file exists.
+     * @throws An error if the existence check fails.
+     */
     static existsFile(filePath: string): Promise<boolean>;
     /**
      * Writes an object to a JSON file, appending it to an existing array if the file already exists.
@@ -367,12 +360,6 @@ declare class IOF {
     }>;
 }
 
-type iof_IOF = IOF;
-declare const iof_IOF: typeof IOF;
-declare namespace iof {
-  export { iof_IOF as IOF };
-}
-
 declare const terminalColors: {
     reset: string;
     bright: string;
@@ -399,21 +386,9 @@ declare const terminalColors: {
     BW: string;
 };
 
-declare const colors_terminalColors: typeof terminalColors;
-declare namespace colors {
-  export { colors_terminalColors as terminalColors };
-}
-
 declare function HashWithSHA256(data: string): string;
 declare function GenerateUUID(): string;
 declare function GenerateRandomString(length: number): string;
-
-declare const hash_GenerateRandomString: typeof GenerateRandomString;
-declare const hash_GenerateUUID: typeof GenerateUUID;
-declare const hash_HashWithSHA256: typeof HashWithSHA256;
-declare namespace hash {
-  export { hash_GenerateRandomString as GenerateRandomString, hash_GenerateUUID as GenerateUUID, hash_HashWithSHA256 as HashWithSHA256 };
-}
 
 declare class Logger {
     private static log;
@@ -425,18 +400,7 @@ declare class Logger {
     static custom(type: string, message: string, funcName?: string): void;
 }
 
-type logger_Logger = Logger;
-declare const logger_Logger: typeof Logger;
-declare namespace logger {
-  export { logger_Logger as Logger };
-}
-
 declare function mimeType(fileName: string): "video/mpeg" | "video/webm" | "video/3gpp" | "video/x-matroska" | "video/x-msvideo" | "video/quicktime" | "video/x-ms-wmv" | "video/x-flv" | "video/x-m4v" | "audio/mpeg" | "audio/wav" | "audio/ogg" | "audio/aac" | "audio/flac" | "audio/alac" | "image/jpeg" | "image/png" | "image/gif" | "image/bmp" | "image/webp" | "image/svg+xml" | "image/x-icon" | "image/tiff" | "image/vnd.adobe.photoshop" | "application/postscript" | "application/x-indesign" | "image/x-raw" | "image/x-canon-cr2" | "image/x-nikon-nef" | "image/x-olympus-orf" | "image/x-panasonic-rw2" | "image/x-pentax-pef" | "image/x-sony-arw" | "image/x-adobe-dng" | "image/x-sigma-x3f" | "image/x-canon-cr3" | "image/heic" | "image/heif" | "image/avif" | "application/pdf" | "text/plain" | "text/html" | "text/css" | "application/javascript" | "application/json" | "application/xml" | "application/zip" | "application/x-rar-compressed" | "application/x-7z-compressed" | "application/octet-stream";
-
-declare const mimeType$1_mimeType: typeof mimeType;
-declare namespace mimeType$1 {
-  export { mimeType$1_mimeType as mimeType };
-}
 
 declare function Question(question?: string): Promise<string>;
 declare function CloseTerminal(): Promise<void>;
@@ -452,15 +416,6 @@ declare function ParseEnvKeys(prefix: string): {
     values: string[];
 };
 
-declare const terminal_ClearTerminal: typeof ClearTerminal;
-declare const terminal_CloseTerminal: typeof CloseTerminal;
-declare const terminal_Help: typeof Help;
-declare const terminal_ParseEnvKeys: typeof ParseEnvKeys;
-declare const terminal_Question: typeof Question;
-declare namespace terminal {
-  export { terminal_ClearTerminal as ClearTerminal, terminal_CloseTerminal as CloseTerminal, terminal_Help as Help, terminal_ParseEnvKeys as ParseEnvKeys, terminal_Question as Question };
-}
-
 declare class Time {
     private static formatDateToParts;
     private static formatDateString;
@@ -472,10 +427,93 @@ declare class Time {
     static getTimeToLogFormat(): string;
 }
 
-type time_Time = Time;
-declare const time_Time: typeof Time;
-declare namespace time {
-  export { time_Time as Time };
+interface SessionConfig {
+    /**
+     * The platform for the session, e.g., "web", "mobile", etc.
+     */
+    platform: string;
+    /**
+     * The folder name where session files are stored.
+     * Default is "sessions".
+     */
+    folderName?: string;
+}
+/**
+ * Represents a session for an AI agent.
+ * This class is used to manage the session configuration and operations.
+ * It can be extended to implement specific session functionalities.
+ */
+declare class AgentSession {
+    private platform;
+    private folderName;
+    private sessionFilePrefix;
+    private userBase;
+    private userSessionFileName;
+    /**
+     * Creates a new session with the specified configuration.
+     * @param config - The configuration for the session, including the platform.
+     */
+    constructor(config: SessionConfig);
+    /**
+     * Initializes the platform for the session.
+     * This method can be overridden to implement platform-specific initialization logic.
+     */
+    private initPlatform;
+    /**
+     * Starts a new session for the user.
+     * If the session file does not exist, it creates a new one.
+     * If it exists, it resumes the session from the file.
+     * @param user - The user for whom the session is being started.
+     * @param folderName - The name of the folder where session files are stored.
+     * @returns An object containing the user and the session history.
+     */
+    useJSONFileSession(user: UserBase): Promise<{
+        user: UserBase;
+        session: CoreMessage[];
+    }>;
+    /**
+     * Saves the conversation history to a JSON file.
+     * @param data - The conversation data to be saved.
+     * @throws An error if the file cannot be written or if the content is not an array.
+     */
+    saveHistory(data: ConversationDB): Promise<void>;
+    /**
+     * Retrieves user data from a JSON file.
+     * If the user exists, it returns the user data; otherwise, it returns null.
+     * @param user - The user object containing the phone number to search for.
+     * @returns The user data if found, or null if not found.
+     */
+    getUserData(user: UserBase): Promise<UserBase | null>;
+    /**
+    * Retrieves the conversation history from a JSON file.
+    * The history is sorted by message timestamp and response timestamp.
+    * @param filePath - The path to the JSON file containing the conversation history.
+    * @returns An array of CoreMessage objects representing the conversation history.
+    */
+    getHistory(filePath: string): Promise<CoreMessage[]>;
+    /**
+     * Starts a new session for the user.
+     * If the session file does not exist, it creates a new one.
+     * If it exists, it resumes the session from the file.
+     * @param user - The user for whom the session is being started.
+     * @returns An object containing the user and the session history.
+     */
+    private createUserJSONFileSession;
+    /**
+     * Starts a new session for the user.
+     * If the session file does not exist, it creates a new one.
+     * If it exists, it resumes the session from the file.
+     * @param user - The user for whom the session is being started.
+     * @returns An object containing the user and the session history.
+     */
+    private createNewJSONFileSession;
+    /**
+     * Resumes the session from a JSON file.
+     * If the file does not exist or is empty, it returns an empty array.
+     * @param user - The user for whom the session is being resumed.
+     * @returns An array of CoreMessages from the JSON file.
+     */
+    private resumeJSONFileSession;
 }
 
-export { agent as Agent, type AtLeastOne, colors as Colors, type ConversationDB, type FileDownloadInterface, type FileInterface, type FileStorageInterface, hash as Hash, iof as IOF, type InlineData, logger as Logger, type LooseToStrict, mimeType$1 as MimeType, type StartChatResult, terminal as Terminal, time as Time, tools as Tools, type UserBase };
+export { AgentSession, AiAgent, type AtLeastOne, ClearTerminal, CloseTerminal, type ConversationDB, type FileDownloadInterface, type FileInterface, type FileStorageInterface, GenerateRandomString, GenerateUUID, HashWithSHA256, Help, IOF, type InlineData, Logger, type LooseToStrict, ParseEnvKeys, Question, type StartChatResult, TaskHandler, Time, Tools, type UserBase, mimeType, terminalColors };

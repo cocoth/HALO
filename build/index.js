@@ -30,36 +30,28 @@ var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: tru
 // index.ts
 var index_exports = {};
 __export(index_exports, {
-  Agent: () => agent_exports,
-  Colors: () => colors_exports,
+  AgentSession: () => AgentSession,
+  AiAgent: () => AiAgent,
+  ClearTerminal: () => ClearTerminal,
+  CloseTerminal: () => CloseTerminal,
   CoreMessage: () => import_ai3.CoreMessage,
-  Hash: () => hash_exports,
-  IOF: () => iof_exports,
-  Logger: () => logger_exports,
-  MimeType: () => mimeType_exports,
-  Terminal: () => terminal_exports,
-  Time: () => time_exports,
-  Tools: () => tools_exports
+  GenerateRandomString: () => GenerateRandomString,
+  GenerateUUID: () => GenerateUUID,
+  HashWithSHA256: () => HashWithSHA256,
+  Help: () => Help,
+  IOF: () => IOF,
+  Logger: () => Logger,
+  ParseEnvKeys: () => ParseEnvKeys,
+  Question: () => Question,
+  TaskHandler: () => TaskHandler,
+  Time: () => Time,
+  Tools: () => Tools,
+  mimeType: () => mimeType,
+  terminalColors: () => terminalColors
 });
 module.exports = __toCommonJS(index_exports);
 
-// src/core/agent.ts
-var agent_exports = {};
-__export(agent_exports, {
-  AiAgent: () => AiAgent
-});
-
-// src/utils/logger.ts
-var logger_exports = {};
-__export(logger_exports, {
-  Logger: () => Logger
-});
-
 // src/utils/colors.ts
-var colors_exports = {};
-__export(colors_exports, {
-  terminalColors: () => terminalColors
-});
 var terminalColors = {
   reset: "\x1B[0m",
   bright: "\x1B[1m",
@@ -87,10 +79,6 @@ var terminalColors = {
 };
 
 // src/utils/time.ts
-var time_exports = {};
-__export(time_exports, {
-  Time: () => Time
-});
 var Time = class _Time {
   static formatDateToParts(date, timeZone) {
     const formatter = new Intl.DateTimeFormat("id-ID", {
@@ -185,19 +173,11 @@ var import_openai = require("@ai-sdk/openai");
 var import_ai2 = require("ai");
 
 // src/lib/iof.ts
-var iof_exports = {};
-__export(iof_exports, {
-  IOF: () => IOF
-});
 var crypto = __toESM(require("crypto"));
 var path = __toESM(require("path"));
 var fs = __toESM(require("fs"));
 
 // src/utils/mimeType.ts
-var mimeType_exports = {};
-__export(mimeType_exports, {
-  mimeType: () => mimeType
-});
 function mimeType(fileName) {
   const ext = fileName.split(".").pop();
   switch (ext) {
@@ -358,6 +338,12 @@ var IOF = class _IOF {
       throw new Error(`Failed to check existence of ${filePath}: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
+  /**
+   * Asynchronously checks if a file exists at the specified path.
+   * @param filePath - The path to the file.
+   * @returns A promise that resolves to a boolean indicating whether the file exists.
+   * @throws An error if the existence check fails.
+   */
   static async existsFile(filePath) {
     try {
       return await fs.promises.access(filePath, fs.constants.F_OK).then(() => true).catch(() => false);
@@ -543,11 +529,6 @@ var IOF = class _IOF {
 var import_google = require("@ai-sdk/google");
 
 // src/core/tools.ts
-var tools_exports = {};
-__export(tools_exports, {
-  TaskHandler: () => TaskHandler,
-  Tools: () => Tools
-});
 var import_ai = require("ai");
 var import_zod = require("zod");
 var TaskHandler = {
@@ -616,7 +597,9 @@ var AiAgent = class {
         apiKey: this.apiKey,
         baseURL: this.aiAgentUrl
       });
-      return googleModel(model);
+      return googleModel(model, {
+        useSearchGrounding: true
+      });
     } else if (model?.startsWith("gpt-")) {
       const openAIModel2 = (0, import_openai.createOpenAI)({
         baseURL: this.aiAgentUrl,
@@ -796,12 +779,6 @@ var AiAgent = class {
 };
 
 // src/utils/hash.ts
-var hash_exports = {};
-__export(hash_exports, {
-  GenerateRandomString: () => GenerateRandomString,
-  GenerateUUID: () => GenerateUUID,
-  HashWithSHA256: () => HashWithSHA256
-});
 var import_crypto = __toESM(require("crypto"));
 function HashWithSHA256(data) {
   return import_crypto.default.createHash("sha256").update(data).digest("hex");
@@ -814,14 +791,6 @@ function GenerateRandomString(length) {
 }
 
 // src/utils/terminal.ts
-var terminal_exports = {};
-__export(terminal_exports, {
-  ClearTerminal: () => ClearTerminal,
-  CloseTerminal: () => CloseTerminal,
-  Help: () => Help,
-  ParseEnvKeys: () => ParseEnvKeys,
-  Question: () => Question
-});
 var rl = __toESM(require("readline/promises"));
 var import_dotenv = __toESM(require("dotenv"));
 import_dotenv.default.config();
@@ -870,19 +839,245 @@ function ParseEnvKeys(prefix) {
   return { keys, values };
 }
 
+// src/lib/session.ts
+var AgentSession = class {
+  platform;
+  folderName = "sessions";
+  sessionFilePrefix = "session-";
+  userBase = null;
+  userSessionFileName = null;
+  /**
+   * Creates a new session with the specified configuration.
+   * @param config - The configuration for the session, including the platform.
+   */
+  constructor(config) {
+    this.platform = config.platform;
+    this.folderName = config.folderName || this.folderName;
+    this.initPlatform().catch((error) => {
+      throw new Error(error);
+    });
+  }
+  /**
+   * Initializes the platform for the session.
+   * This method can be overridden to implement platform-specific initialization logic.
+   */
+  async initPlatform() {
+    try {
+      const platform = this.platform;
+      if (!platform) {
+        throw new Error("Platform is required to initialize the session.");
+      }
+      if (!await IOF.existsFile(`./${this.folderName}/platform.json`)) {
+        IOF.writeJSONFileOverwrite({
+          filePath: `./${this.folderName}/platform.json`,
+          data: [{ platform, createdAt: Time.getCurrentTime() }]
+        });
+      }
+    } catch (error) {
+      throw new Error(`Failed to initialize platform: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
+  /**
+   * Starts a new session for the user.
+   * If the session file does not exist, it creates a new one.
+   * If it exists, it resumes the session from the file.
+   * @param user - The user for whom the session is being started.
+   * @param folderName - The name of the folder where session files are stored.
+   * @returns An object containing the user and the session history.
+   */
+  async useJSONFileSession(user) {
+    if (!user) {
+      throw new Error("User is required to start a session.");
+    }
+    this.userBase = user;
+    IOF.mkdir(`./${this.folderName}`);
+    const session = await this.resumeJSONFileSession(user);
+    if (session && session.session.length > 0) {
+      return session;
+    }
+    return await this.createNewJSONFileSession(user);
+  }
+  /**
+   * Saves the conversation history to a JSON file.
+   * @param data - The conversation data to be saved.
+   * @throws An error if the file cannot be written or if the content is not an array.
+   */
+  async saveHistory(data) {
+    if (!this.userBase) {
+      throw new Error("User must be set before saving history.");
+    }
+    await IOF.writeJSONFile({
+      filePath: `./${this.folderName}/${this.sessionFilePrefix}${this.userBase?.username || this.userBase?.email || this.userBase?.phone || this.userBase?.name}.json`,
+      data
+    });
+  }
+  /**
+   * Retrieves user data from a JSON file.
+   * If the user exists, it returns the user data; otherwise, it returns null.
+   * @param user - The user object containing the phone number to search for.
+   * @returns The user data if found, or null if not found.
+   */
+  async getUserData(user) {
+    const usersFilePath = this.userSessionFileName || `./${this.folderName}/users.json`;
+    if (await IOF.existsFile(usersFilePath)) {
+      const history = await IOF.readJSONFile(usersFilePath);
+      const existingUser = history.find((u) => u.phone === user.phone);
+      if (existingUser) {
+        return existingUser;
+      }
+    }
+    return null;
+  }
+  /**
+  * Retrieves the conversation history from a JSON file.
+  * The history is sorted by message timestamp and response timestamp.
+  * @param filePath - The path to the JSON file containing the conversation history.
+  * @returns An array of CoreMessage objects representing the conversation history.
+  */
+  async getHistory(filePath) {
+    const history = await IOF.readJSONFile(filePath);
+    if (!history || history.length === 0) {
+      return [];
+    }
+    history?.sort((a, b) => {
+      const messageTimestampComparison = new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime();
+      if (messageTimestampComparison !== 0) {
+        return messageTimestampComparison;
+      }
+      const responseTimestampComparison = new Date(a.timestamp || 0).getTime() - new Date(b.timestamp || 0).getTime();
+      return responseTimestampComparison;
+    });
+    const message = [];
+    history.forEach((item) => {
+      if (item.role === "user" && item.text) {
+        message.push({
+          role: "user",
+          content: [
+            {
+              type: "text",
+              text: item.text
+            }
+          ]
+        });
+      }
+      if (item.role === "assistant" && item.text) {
+        message.push({
+          role: "assistant",
+          content: [
+            {
+              type: "text",
+              text: item.text
+            }
+          ]
+        });
+      }
+    });
+    return message;
+  }
+  /**
+   * Starts a new session for the user.
+   * If the session file does not exist, it creates a new one.
+   * If it exists, it resumes the session from the file.
+   * @param user - The user for whom the session is being started.
+   * @returns An object containing the user and the session history.
+   */
+  async createUserJSONFileSession(user) {
+    if (!user) {
+      throw new Error("User is required to create a session.");
+    }
+    const usersFilePath = `./${this.folderName}/users.json`;
+    this.userSessionFileName = usersFilePath;
+    IOF.mkdir(`./${this.folderName}`);
+    let users = [];
+    if (IOF.existsFileSync(usersFilePath)) {
+      users = await IOF.readJSONFile(usersFilePath);
+      const existingUser = users.find((u) => u.username === user.username || u.email === user.email || u.phone === user.phone || u.name === user.name);
+      if (existingUser) {
+        return existingUser;
+      }
+      users.push(user);
+      await IOF.writeJSONFileOverwrite({
+        filePath: usersFilePath,
+        data: users
+      });
+      return user;
+    } else {
+      await IOF.writeJSONFileOverwrite({
+        filePath: usersFilePath,
+        data: [user]
+      });
+      return user;
+    }
+  }
+  /**
+   * Starts a new session for the user.
+   * If the session file does not exist, it creates a new one.
+   * If it exists, it resumes the session from the file.
+   * @param user - The user for whom the session is being started.
+   * @returns An object containing the user and the session history.
+   */
+  async createNewJSONFileSession(user) {
+    try {
+      if (!user) {
+        throw new Error("User is required to create a session.");
+      }
+      const userSession = await this.createUserJSONFileSession(user);
+      const filePath = `./${this.folderName}/${this.sessionFilePrefix}${user.username || user.email || user.phone || user.name}.json`;
+      await IOF.writeJSONFileOverwrite({ filePath, data: [] });
+      return {
+        user: userSession,
+        session: []
+      };
+    } catch (error) {
+      throw new Error(`Failed to create new session for user ${user.username || user.email || user.phone || user.name}: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
+  /**
+   * Resumes the session from a JSON file.
+   * If the file does not exist or is empty, it returns an empty array.
+   * @param user - The user for whom the session is being resumed.
+   * @returns An array of CoreMessages from the JSON file.
+   */
+  async resumeJSONFileSession(user) {
+    try {
+      const history = await this.getHistory(`./${this.folderName}/${this.sessionFilePrefix}${user.username || user.email || user.phone || user.name}.json`);
+      return {
+        user,
+        session: history
+      };
+    } catch (error) {
+      if (error instanceof Error && error.message.includes("File not found")) {
+        return {
+          user,
+          session: []
+        };
+      }
+      throw new Error(`Failed to resume session for user ${user.username || user.email || user.phone || user.name}: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
+};
+
 // index.ts
 var import_ai3 = require("ai");
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
-  Agent,
-  Colors,
+  AgentSession,
+  AiAgent,
+  ClearTerminal,
+  CloseTerminal,
   CoreMessage,
-  Hash,
+  GenerateRandomString,
+  GenerateUUID,
+  HashWithSHA256,
+  Help,
   IOF,
   Logger,
-  MimeType,
-  Terminal,
+  ParseEnvKeys,
+  Question,
+  TaskHandler,
   Time,
-  Tools
+  Tools,
+  mimeType,
+  terminalColors
 });
 //# sourceMappingURL=index.js.map
