@@ -795,7 +795,7 @@ var AiAgent = class {
             ...session,
             {
               role: "user",
-              content: prompt
+              content: prompt.length > 0 ? prompt : ""
             }
           ];
         } else {
@@ -806,7 +806,7 @@ var AiAgent = class {
               content: [
                 {
                   type: "text",
-                  text: prompt
+                  text: prompt.length > 0 ? prompt : ""
                 },
                 {
                   type: "file",
@@ -832,7 +832,7 @@ var AiAgent = class {
             content: [
               {
                 type: "text",
-                text: prompt
+                text: prompt.length > 0 ? prompt : ""
               },
               {
                 type: "file",
@@ -848,7 +848,7 @@ var AiAgent = class {
             role: "user",
             content: [{
               type: "text",
-              text: prompt
+              text: prompt.length > 0 ? prompt : ""
             }]
           }
         ];
