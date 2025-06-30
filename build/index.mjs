@@ -706,9 +706,9 @@ var AiAgent = class {
         throw new Error("Session must be an array of CoreMessage.");
       }
       if (session && session.length > 0) {
-        let messages = [];
+        let messages2 = [];
         if (!media || media.inlineData === "") {
-          messages = [
+          messages2 = [
             ...session,
             {
               role: "user",
@@ -716,7 +716,7 @@ var AiAgent = class {
             }
           ];
         } else {
-          messages = [
+          messages2 = [
             ...session,
             {
               role: "user",
@@ -735,14 +735,44 @@ var AiAgent = class {
           ];
         }
         if (this.streamMethod === "stream") {
-          const textStream = await this.generateStream(messages);
+          const textStream = await this.generateStream(messages2);
           return { textStream: textStream.textStream, response: textStream.response };
         }
-        const { text: text2, response: response2 } = await this.generateText({ messages });
+        const { text: text2, response: response2 } = await this.generateText({ messages: messages2 });
         return { text: text2, response: response2 };
+      }
+      let messages = [];
+      if (media && media.inlineData !== "") {
+        messages = [
+          {
+            role: "user",
+            content: [
+              {
+                type: "text",
+                text: prompt
+              },
+              {
+                type: "file",
+                data: media.inlineData,
+                mimeType: media.mimeType || "application/octet-stream"
+              }
+            ]
+          }
+        ];
+      } else {
+        messages = [
+          {
+            role: "user",
+            content: prompt
+          }
+        ];
       }
       const greeting = user ? await this.getUserInfo(user) : "";
       const fullPrompt = `${greeting} ${prompt}`;
+      messages.unshift({
+        role: "user",
+        content: fullPrompt
+      });
       if (this.streamMethod === "stream") {
         const textStream = await this.generateStream([
           {
