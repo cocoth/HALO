@@ -160,6 +160,7 @@ import {
 import * as crypto from "crypto";
 import * as path from "path";
 import * as fs from "fs";
+import chokidar from "chokidar";
 
 // src/utils/mimeType.ts
 function mimeType(fileName) {
@@ -323,6 +324,31 @@ var IOF = class _IOF {
     } catch (error) {
       throw new Error(`Failed to remove at ${dirPath}: ${error instanceof Error ? error.message : String(error)}`);
     }
+  }
+  /**
+   * Watches a directory for file system events and executes a callback with the event details.
+   * @param dirPath - The path of the directory to watch.
+   * @param event - The type of event to listen for (e.g., "add", "change", "unlink").
+   * @param params - Optional callback function to execute with the file path and event type.
+   */
+  static watcher({
+    dirPath,
+    event,
+    params
+  }) {
+    const fullPath = path.resolve(process.cwd(), dirPath);
+    const watcher = chokidar.watch(fullPath, { persistent: true });
+    watcher.on(event, (filePath) => {
+      if (params) {
+        params({
+          filePath: path.resolve(process.cwd(), filePath),
+          event
+        });
+      }
+    });
+    watcher.on("error", (error) => {
+      throw new Error(`Watcher error: ${error instanceof Error ? error.message : String(error)}`);
+    });
   }
   /**
    * Checks if a file exists at the specified path.

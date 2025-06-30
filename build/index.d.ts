@@ -4,6 +4,7 @@ import { ToolSet, CoreMessage } from 'ai';
 export { CoreMessage } from 'ai';
 import { google } from '@ai-sdk/google';
 import { z } from 'zod';
+import { FSWatcherKnownEventMap } from 'chokidar';
 
 /**
  * Represents a user in the system.
@@ -280,6 +281,20 @@ declare class IOF {
      * @param dirPath - The path of the directory to remove.
      */
     static rm(dirPath: string): void;
+    /**
+     * Watches a directory for file system events and executes a callback with the event details.
+     * @param dirPath - The path of the directory to watch.
+     * @param event - The type of event to listen for (e.g., "add", "change", "unlink").
+     * @param params - Optional callback function to execute with the file path and event type.
+     */
+    static watcher({ dirPath, event, params, }: {
+        dirPath: string;
+        event: keyof FSWatcherKnownEventMap | "add" | "change" | "addDir" | "unlink" | "unlinkDir";
+        params?: (params: {
+            filePath: string;
+            event: string;
+        }) => void;
+    }): void;
     /**
      * Checks if a file exists at the specified path.
      * @param filePath - The path to the file.

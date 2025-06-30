@@ -6,10 +6,8 @@
   "scripts": {
     "build-obf:win": "rmdir /s /q build dist && tsup && xcopy /s /y /I build\\*.d.ts dist\\ && xcopy /s /y /I build\\*.d.mts dist\\ && xcopy /s /y /I build\\*.d.cts dist\\ && javascript-obfuscator build --output dist --rename-globals false",
     "build-obf:linux": "rm -rf build && tsup && cp -r build/*.d.ts build/*.d.mts build/*.d.cts dist && javascript-obfuscator build --output dist --rename-globals false",
-
     "build:win": "rmdir /s /q build && tsup",
     "build:linux": "rm -rf build && tsup",
-
     "dev:test": "tsx src/test/test.ts"
   },
   "keywords": [],
@@ -27,6 +25,7 @@
     "@ai-sdk/google": "^1.2.19",
     "@ai-sdk/openai": "^1.3.22",
     "ai": "^4.3.16",
+    "chokidar": "^4.0.3",
     "dotenv": "^16.6.0",
     "zod": "^3.25.67"
   }
