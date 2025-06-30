@@ -1003,16 +1003,19 @@ var AgentSession = class {
       throw new Error("User is required to start a session.");
     }
     if (!sessionFileName) {
-      sessionFileName = `${this.folderName}/${this.sessionFilePrefix}${user.username || user.email || user.phone || user.name}.json`;
+      this.sessionFileName = `./${this.folderName}/${this.sessionFilePrefix}${user.username || user.email || user.phone || user.name}.json`;
+    } else if (sessionFileName.includes("/")) {
+      this.sessionFileName = sessionFileName;
+    } else {
+      this.sessionFileName = `./${this.folderName}/${this.sessionFilePrefix}${sessionFileName}.json`;
     }
-    this.sessionFileName = `${this.folderName}/${this.sessionFilePrefix}${sessionFileName}.json`;
     this.userBase = user;
     IOF.mkdir(`./${this.folderName}`);
     const session = await this.resumeJSONFileSession({ user, fileName: sessionFileName });
     if (session && session.session.length > 0) {
       return session;
     }
-    return await this.createNewJSONFileSession({ user, fileName: sessionFileName });
+    return await this.createNewJSONFileSession({ user, fileName: this.sessionFileName });
   }
   /**
    * Saves the conversation history to a JSON file.
