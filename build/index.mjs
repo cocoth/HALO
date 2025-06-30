@@ -965,7 +965,7 @@ var AgentSession = class {
     if (!sessionFileName) {
       sessionFileName = `${this.sessionFilePrefix}${user.username || user.email || user.phone || user.name}.json`;
     }
-    this.sessionFileName = `${this.sessionFilePrefix}${sessionFileName}.json`;
+    this.sessionFileName = `${this.folderName}/${this.sessionFilePrefix}${sessionFileName}.json`;
     this.userBase = user;
     IOF.mkdir(`./${this.folderName}`);
     const session = await this.resumeJSONFileSession({ user, fileName: sessionFileName });
