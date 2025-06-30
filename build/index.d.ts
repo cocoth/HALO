@@ -414,8 +414,8 @@ declare function mimeType(fileName: string): "video/mpeg" | "video/webm" | "vide
  */
 declare function Question(question?: string): Promise<string>;
 /**
- * Prompts the user for input and returns the response.
- * @returns A promise that resolves to the user's input.
+ * Closes the terminal interface and exits the process.
+ * This function is useful for gracefully shutting down the terminal.
  */
 declare function CloseTerminal(): Promise<void>;
 /**
