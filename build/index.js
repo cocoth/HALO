@@ -711,7 +711,22 @@ var AiAgent = class {
    * @param messages - An array of CoreMessage objects representing the conversation history.
    * @returns A stream of text responses from the AI agent.
    */
-  async generateStream(messages) {
+  async generateStream({ messages, prompt }) {
+    if (prompt && typeof prompt !== "string") {
+      throw new Error("Prompt must be a string.");
+    }
+    if (messages && !Array.isArray(messages)) {
+      throw new Error("Messages must be an array of CoreMessage.");
+    }
+    if (prompt) {
+      return (0, import_ai2.streamText)({
+        model: this.model,
+        system: await this.systemPrompt(),
+        tools: Object.keys(this.toolSet).length > 0 ? this.toolSet : void 0,
+        maxSteps: Object.keys(this.toolSet).length > 0 ? Number.MAX_SAFE_INTEGER : void 0,
+        prompt
+      });
+    }
     return (0, import_ai2.streamText)({
       model: this.model,
       system: await this.systemPrompt(),
@@ -775,13 +790,15 @@ var AiAgent = class {
           ];
         }
         if (this.streamMethod === "stream") {
-          const textStream = await this.generateStream(messages2);
+          const textStream = await this.generateStream({ messages: messages2 });
           return { textStream: textStream.textStream, response: textStream.response };
         }
         const { text: text2, response: response2 } = await this.generateText({ messages: messages2 });
         return { text: text2, response: response2 };
       }
       let messages = [];
+      const greeting = user ? await this.getUserInfo(user) : "";
+      const fullPrompt = `${greeting} ${prompt}`;
       if (media && media.inlineData !== "") {
         messages = [
           {
@@ -789,7 +806,7 @@ var AiAgent = class {
             content: [
               {
                 type: "text",
-                text: prompt
+                text: fullPrompt
               },
               {
                 type: "file",
@@ -803,26 +820,18 @@ var AiAgent = class {
         messages = [
           {
             role: "user",
-            content: prompt
+            content: [{
+              type: "text",
+              text: fullPrompt
+            }]
           }
         ];
       }
-      const greeting = user ? await this.getUserInfo(user) : "";
-      const fullPrompt = `${greeting} ${prompt}`;
-      messages.unshift({
-        role: "user",
-        content: fullPrompt
-      });
       if (this.streamMethod === "stream") {
-        const textStream = await this.generateStream([
-          {
-            role: "user",
-            content: fullPrompt
-          }
-        ]);
+        const textStream = await this.generateStream({ messages });
         return { textStream: textStream.textStream, response: textStream.response };
       }
-      const { text, response } = await this.generateText({ prompt: fullPrompt });
+      const { text, response } = await this.generateText({ messages });
       return { text, response };
     } catch (error) {
       if (error instanceof Error && error.message.includes("Rate limit")) {
