@@ -275,6 +275,12 @@ declare class IOF {
      */
     static mkdir(dirPath: string): void;
     /**
+     * Removes a directory or file at the specified path.
+     * If the path is a directory, it will be removed recursively.
+     * @param dirPath - The path of the directory to remove.
+     */
+    static rm(dirPath: string): void;
+    /**
      * Checks if a file exists at the specified path.
      * @param filePath - The path to the file.
      * @returns A boolean indicating whether the file exists.

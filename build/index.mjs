@@ -310,6 +310,21 @@ var IOF = class _IOF {
     }
   }
   /**
+   * Removes a directory or file at the specified path.
+   * If the path is a directory, it will be removed recursively.
+   * @param dirPath - The path of the directory to remove.
+   */
+  static rm(dirPath) {
+    try {
+      if (fs.existsSync(dirPath)) {
+        Logger.info(`Removing: ${dirPath}`);
+        fs.rmSync(dirPath, { recursive: true, force: true });
+      }
+    } catch (error) {
+      throw new Error(`Failed to remove at ${dirPath}: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
+  /**
    * Checks if a file exists at the specified path.
    * @param filePath - The path to the file.
    * @returns A boolean indicating whether the file exists.
