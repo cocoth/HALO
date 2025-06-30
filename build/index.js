@@ -378,15 +378,15 @@ var IOF = class _IOF {
   }) {
     const fullPath = path.resolve(process.cwd(), dirPath);
     const watcher = import_chokidar.default.watch(fullPath, { persistent: true });
-    watcher.on(event, (filePath) => {
+    watcher.on(event, async (filePath) => {
       if (params) {
-        params({
+        await params({
           filePath: path.resolve(process.cwd(), filePath),
           event
         });
       }
     });
-    watcher.on("error", (error) => {
+    watcher.on("error", async (error) => {
       throw new Error(`Watcher error: ${error instanceof Error ? error.message : String(error)}`);
     });
   }

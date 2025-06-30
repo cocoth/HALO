@@ -293,7 +293,7 @@ declare class IOF {
         params?: (params: {
             filePath: string;
             event: string;
-        }) => void;
+        }) => Promise<void>;
     }): void;
     /**
      * Checks if a file exists at the specified path.
