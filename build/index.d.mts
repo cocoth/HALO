@@ -407,9 +407,29 @@ declare class Logger {
 
 declare function mimeType(fileName: string): "video/mpeg" | "video/webm" | "video/3gpp" | "video/x-matroska" | "video/x-msvideo" | "video/quicktime" | "video/x-ms-wmv" | "video/x-flv" | "video/x-m4v" | "audio/mpeg" | "audio/wav" | "audio/ogg" | "audio/aac" | "audio/flac" | "audio/alac" | "image/jpeg" | "image/png" | "image/gif" | "image/bmp" | "image/webp" | "image/svg+xml" | "image/x-icon" | "image/tiff" | "image/vnd.adobe.photoshop" | "application/postscript" | "application/x-indesign" | "image/x-raw" | "image/x-canon-cr2" | "image/x-nikon-nef" | "image/x-olympus-orf" | "image/x-panasonic-rw2" | "image/x-pentax-pef" | "image/x-sony-arw" | "image/x-adobe-dng" | "image/x-sigma-x3f" | "image/x-canon-cr3" | "image/heic" | "image/heif" | "image/avif" | "application/pdf" | "text/plain" | "text/html" | "text/css" | "application/javascript" | "application/json" | "application/xml" | "application/zip" | "application/x-rar-compressed" | "application/x-7z-compressed" | "application/octet-stream";
 
+/**
+ * Prompts the user for input and returns the response.
+ * @param question The question to ask the user.
+ * @returns A promise that resolves to the user's input.
+ */
 declare function Question(question?: string): Promise<string>;
+/**
+ * Prompts the user for input and returns the response.
+ * @returns A promise that resolves to the user's input.
+ */
 declare function CloseTerminal(): Promise<void>;
+/**
+ * Clears the terminal screen.
+ * @returns A promise that resolves to the user's input.
+ */
 declare function ClearTerminal(): Promise<void>;
+/**
+ * Pauses execution for a specified duration.
+ *
+ * @param duration - The number of seconds to sleep.
+ * @returns A promise that resolves after the specified duration.
+ */
+declare function Sleep(duration: number): Promise<void>;
 declare function Help(): Promise<void>;
 /**
  * Parses environment variables that start with a given prefix.
@@ -426,8 +446,9 @@ declare const terminal_CloseTerminal: typeof CloseTerminal;
 declare const terminal_Help: typeof Help;
 declare const terminal_ParseEnvKeys: typeof ParseEnvKeys;
 declare const terminal_Question: typeof Question;
+declare const terminal_Sleep: typeof Sleep;
 declare namespace terminal {
-  export { terminal_ClearTerminal as ClearTerminal, terminal_CloseTerminal as CloseTerminal, terminal_Help as Help, terminal_ParseEnvKeys as ParseEnvKeys, terminal_Question as Question };
+  export { terminal_ClearTerminal as ClearTerminal, terminal_CloseTerminal as CloseTerminal, terminal_Help as Help, terminal_ParseEnvKeys as ParseEnvKeys, terminal_Question as Question, terminal_Sleep as Sleep };
 }
 
 declare class Time {

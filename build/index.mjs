@@ -786,7 +786,8 @@ __export(terminal_exports, {
   CloseTerminal: () => CloseTerminal,
   Help: () => Help,
   ParseEnvKeys: () => ParseEnvKeys,
-  Question: () => Question
+  Question: () => Question,
+  Sleep: () => Sleep
 });
 import * as rl from "readline/promises";
 import dotenv from "dotenv";
@@ -811,6 +812,9 @@ async function CloseTerminal() {
 async function ClearTerminal() {
   process.stdout.write("\x1Bc");
   return terminal.prompt();
+}
+function Sleep(duration) {
+  return new Promise((resolve2) => setTimeout(resolve2, duration * 1e3));
 }
 async function Help() {
   console.log(`
