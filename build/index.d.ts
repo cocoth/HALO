@@ -546,7 +546,14 @@ declare class AgentSession {
      * @returns An object containing the user and the session history.
      */
     useJSONFileSession({ user, sessionFileName }: {
+        /**
+         * The user for whom the session is being started.
+         * This is required to create or resume a session.
+         */
         user: UserBase;
+        /**
+         * The name of the session file. If not provided, it defaults to a combination of the sessionFilePrefix and the user's username, email, phone, or name.
+         */
         sessionFileName?: string;
     }): Promise<{
         user: UserBase;

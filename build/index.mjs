@@ -967,7 +967,10 @@ var AgentSession = class {
    * @param folderName - The name of the folder where session files are stored.
    * @returns An object containing the user and the session history.
    */
-  async useJSONFileSession({ user, sessionFileName }) {
+  async useJSONFileSession({
+    user,
+    sessionFileName
+  }) {
     if (!user) {
       throw new Error("User is required to start a session.");
     }
