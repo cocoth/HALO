@@ -967,6 +967,7 @@ var AgentSession = class {
   sessionFilePrefix = "session-";
   userBase = null;
   userSessionFileName = null;
+  sessionFileName = null;
   /**
    * Creates a new session with the specified configuration.
    * @param config - The configuration for the session, including the platform.
@@ -1006,17 +1007,21 @@ var AgentSession = class {
    * @param folderName - The name of the folder where session files are stored.
    * @returns An object containing the user and the session history.
    */
-  async useJSONFileSession(user) {
+  async useJSONFileSession({ user, sessionFileName }) {
     if (!user) {
       throw new Error("User is required to start a session.");
     }
+    if (!sessionFileName) {
+      sessionFileName = `${this.sessionFilePrefix}${user.username || user.email || user.phone || user.name}.json`;
+    }
+    this.sessionFileName = `${this.sessionFilePrefix}${sessionFileName}.json`;
     this.userBase = user;
     IOF.mkdir(`./${this.folderName}`);
-    const session = await this.resumeJSONFileSession(user);
+    const session = await this.resumeJSONFileSession({ user, fileName: sessionFileName });
     if (session && session.session.length > 0) {
       return session;
     }
-    return await this.createNewJSONFileSession(user);
+    return await this.createNewJSONFileSession({ user, fileName: sessionFileName });
   }
   /**
    * Saves the conversation history to a JSON file.
@@ -1027,8 +1032,9 @@ var AgentSession = class {
     if (!this.userBase) {
       throw new Error("User must be set before saving history.");
     }
+    const filePath = `./${this.folderName}/${this.sessionFilePrefix}${this.userBase?.username || this.userBase?.email || this.userBase?.phone || this.userBase?.name}.json`;
     await IOF.writeJSONFile({
-      filePath: `./${this.folderName}/${this.sessionFilePrefix}${this.userBase?.username || this.userBase?.email || this.userBase?.phone || this.userBase?.name}.json`,
+      filePath: this.sessionFileName || filePath,
       data
     });
   }
@@ -1137,14 +1143,14 @@ var AgentSession = class {
    * @param user - The user for whom the session is being started.
    * @returns An object containing the user and the session history.
    */
-  async createNewJSONFileSession(user) {
+  async createNewJSONFileSession({ user, fileName }) {
     try {
       if (!user) {
         throw new Error("User is required to create a session.");
       }
       const userSession = await this.createUserJSONFileSession(user);
-      const filePath = `./${this.folderName}/${this.sessionFilePrefix}${user.username || user.email || user.phone || user.name}.json`;
-      await IOF.writeJSONFileOverwrite({ filePath, data: [] });
+      const filePath = `./${this.folderName}/${this.sessionFilePrefix}${fileName ? fileName : user.username || user.email || user.phone || user.name}.json`;
+      await IOF.writeJSONFileOverwrite({ filePath: fileName || filePath, data: [] });
       return {
         user: userSession,
         session: []
@@ -1159,9 +1165,9 @@ var AgentSession = class {
    * @param user - The user for whom the session is being resumed.
    * @returns An array of CoreMessages from the JSON file.
    */
-  async resumeJSONFileSession(user) {
+  async resumeJSONFileSession({ user, fileName }) {
     try {
-      const history = await this.getHistory(`./${this.folderName}/${this.sessionFilePrefix}${user.username || user.email || user.phone || user.name}.json`);
+      const history = await this.getHistory(`./${this.folderName}/${fileName ? fileName : this.sessionFilePrefix}${user.username || user.email || user.phone || user.name}.json`);
       return {
         user,
         session: history

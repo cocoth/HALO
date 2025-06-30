@@ -526,6 +526,7 @@ declare class AgentSession {
     private sessionFilePrefix;
     private userBase;
     private userSessionFileName;
+    private sessionFileName;
     /**
      * Creates a new session with the specified configuration.
      * @param config - The configuration for the session, including the platform.
@@ -544,7 +545,10 @@ declare class AgentSession {
      * @param folderName - The name of the folder where session files are stored.
      * @returns An object containing the user and the session history.
      */
-    useJSONFileSession(user: UserBase): Promise<{
+    useJSONFileSession({ user, sessionFileName }: {
+        user: UserBase;
+        sessionFileName?: string;
+    }): Promise<{
         user: UserBase;
         session: CoreMessage[];
     }>;
