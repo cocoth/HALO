@@ -745,6 +745,9 @@ var AiAgent = class {
     media
   }) {
     try {
+      if (!prompt || typeof prompt !== "string") {
+        throw new Error("Prompt must be a non-empty string.");
+      }
       if (session && !Array.isArray(session)) {
         throw new Error("Session must be an array of CoreMessage.");
       }
@@ -755,7 +758,7 @@ var AiAgent = class {
             ...session,
             {
               role: "user",
-              content: prompt.length > 0 ? prompt : ""
+              content: prompt
             }
           ];
         } else {
@@ -766,7 +769,7 @@ var AiAgent = class {
               content: [
                 {
                   type: "text",
-                  text: prompt.length > 0 ? prompt : ""
+                  text: prompt
                 },
                 {
                   type: "file",
@@ -792,7 +795,7 @@ var AiAgent = class {
             content: [
               {
                 type: "text",
-                text: prompt.length > 0 ? prompt : ""
+                text: prompt
               },
               {
                 type: "file",
@@ -808,7 +811,7 @@ var AiAgent = class {
             role: "user",
             content: [{
               type: "text",
-              text: prompt.length > 0 ? prompt : ""
+              text: prompt
             }]
           }
         ];
