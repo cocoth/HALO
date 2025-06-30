@@ -283,11 +283,26 @@ declare class IOF {
      * @param params - Optional callback function to execute with the file path and event type.
      */
     static watcher({ dirPath, event, params, }: {
+        /**
+         * The path of the directory to watch.
+         */
         dirPath: string;
+        /**
+         * The type of event to listen for.
+         */
         event: keyof FSWatcherKnownEventMap | "add" | "change" | "addDir" | "unlink" | "unlinkDir";
-        params?: (params: {
+        /**
+         * Optional callback function to execute with the file path and event type.
+         */
+        params?: ({ filePath, event }: {
+            /**
+             * The full path of the file that triggered the event.
+             */
             filePath: string;
-            event: string;
+            /**
+             * The type of event that occurred.
+             */
+            event: keyof FSWatcherKnownEventMap | "add" | "change" | "addDir" | "unlink" | "unlinkDir";
         }) => Promise<void>;
     }): void;
     /**
