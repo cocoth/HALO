@@ -424,9 +424,8 @@ declare function CloseTerminal(): Promise<void>;
  */
 declare function ClearTerminal(): Promise<void>;
 /**
- * Pauses execution for a specified duration.
- *
- * @param duration - The number of seconds to sleep.
+ * Pauses execution for a specified duration (in seconds), similar to Python's sleep.
+ * @param duration The number of seconds to sleep.
  * @returns A promise that resolves after the specified duration.
  */
 declare function Sleep(duration: number): Promise<void>;

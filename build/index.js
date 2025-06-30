@@ -853,7 +853,7 @@ async function ClearTerminal() {
   process.stdout.write("\x1Bc");
   return terminal.prompt();
 }
-function Sleep(duration) {
+async function Sleep(duration) {
   return new Promise((resolve2) => setTimeout(resolve2, duration * 1e3));
 }
 async function Help() {
