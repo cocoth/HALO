@@ -745,9 +745,6 @@ var AiAgent = class {
     media
   }) {
     try {
-      if (!prompt || typeof prompt !== "string") {
-        throw new Error("Prompt must be a non-empty string.");
-      }
       if (session && !Array.isArray(session)) {
         throw new Error("Session must be an array of CoreMessage.");
       }
