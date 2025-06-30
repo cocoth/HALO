@@ -1003,7 +1003,7 @@ var AgentSession = class {
       throw new Error("User is required to start a session.");
     }
     if (!sessionFileName) {
-      sessionFileName = `${this.sessionFilePrefix}${user.username || user.email || user.phone || user.name}.json`;
+      sessionFileName = `${this.folderName}/${this.sessionFilePrefix}${user.username || user.email || user.phone || user.name}.json`;
     }
     this.sessionFileName = `${this.folderName}/${this.sessionFilePrefix}${sessionFileName}.json`;
     this.userBase = user;
