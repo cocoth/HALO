@@ -1103,8 +1103,8 @@ var AgentSession = class {
         throw new Error("User is required to create a session.");
       }
       const userSession = await this.createUserJSONFileSession(user);
-      const filePath = `./${this.folderName}/${this.sessionFilePrefix}${fileName ? fileName : user.username || user.email || user.phone || user.name}.json`;
-      await IOF.writeJSONFileOverwrite({ filePath: fileName || filePath, data: [] });
+      const targetFilePath = this.sessionFileName || `./${this.folderName}/${this.sessionFilePrefix}${user.username || user.email || user.phone || user.name}.json`;
+      await IOF.writeJSONFileOverwrite({ filePath: targetFilePath, data: [] });
       return {
         user: userSession,
         session: []
