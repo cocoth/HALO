@@ -178,11 +178,6 @@ declare class AiAgent {
      */
     private systemPrompt;
     /**
-     * Retrieves user information based on the provided user base.
-     * This method can be extended to fetch user details from a database or an API.
-     */
-    private getUserInfo;
-    /**
      * Generates a stream of text responses based on the provided messages.
      * It uses the AI agent's model and system prompt to generate the responses.
      * If tools are defined, it will use them in the generation process.

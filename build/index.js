@@ -700,16 +700,6 @@ var AiAgent = class {
     return system;
   }
   /**
-   * Retrieves user information based on the provided user base.
-   * This method can be extended to fetch user details from a database or an API.
-   */
-  async getUserInfo(userData) {
-    const greetingName = `Hai My Username Is: ${userData.username || userData.name || ""}, `;
-    const greetingPhone = `My Phone Number Is: ${userData.phone || ""}. 
-`;
-    return greetingName + greetingPhone;
-  }
-  /**
    * Generates a stream of text responses based on the provided messages.
    * It uses the AI agent's model and system prompt to generate the responses.
    * If tools are defined, it will use them in the generation process.
@@ -838,8 +828,6 @@ var AiAgent = class {
         return { text: text2, response: response2 };
       }
       let messages = [];
-      const greeting = user ? await this.getUserInfo(user) : "";
-      const fullPrompt = `${greeting} ${prompt}`;
       if (media && media.inlineData !== "") {
         messages = [
           {
@@ -847,7 +835,7 @@ var AiAgent = class {
             content: [
               {
                 type: "text",
-                text: fullPrompt
+                text: prompt
               },
               {
                 type: "file",
@@ -863,7 +851,7 @@ var AiAgent = class {
             role: "user",
             content: [{
               type: "text",
-              text: fullPrompt
+              text: prompt
             }]
           }
         ];
