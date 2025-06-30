@@ -971,7 +971,10 @@ var AgentSession = class {
     }
     this.userBase = user;
     IOF.mkdir(`./${this.folderName}`);
-    const session = await this.resumeJSONFileSession({ user, fileName: sessionFileName });
+    const session = await this.resumeJSONFileSession({
+      user,
+      fileName: this.sessionFileName
+    });
     if (session && session.session.length > 0) {
       return session;
     }
@@ -1121,7 +1124,7 @@ var AgentSession = class {
    */
   async resumeJSONFileSession({ user, fileName }) {
     try {
-      const history = await this.getHistory(`./${this.folderName}/${fileName ? fileName : this.sessionFilePrefix}${user.username || user.email || user.phone || user.name}.json`);
+      const history = await this.getHistory(fileName || `./${this.folderName}/${this.sessionFilePrefix}${user.username || user.email || user.phone || user.name}.json`);
       return {
         user,
         session: history
