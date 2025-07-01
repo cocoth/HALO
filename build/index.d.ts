@@ -141,13 +141,15 @@ type AtLeastOne<T, Keys extends keyof T = keyof T> = Keys extends keyof T ? Requ
  *   @property text - The content of the message.
  *   @property timestamp - The timestamp of when the message was sent.
  */
-type ConversationDB<T = undefined> = {
+type ConversationDB<T = any> = {
     role: "user" | "assistant";
     timestamp: Date;
-} & (T extends undefined ? {
+} & (T extends string ? {
     text: string;
+    content?: never;
 } : {
     content: T;
+    text?: never;
 });
 /**
  * LooseToStrict is a utility type that converts a type T to a stricter version.
@@ -713,6 +715,7 @@ declare class AgentSession {
     private userBase;
     private userSessionFileName;
     private sessionFileName;
+    private memorySession;
     /**
      * Creates a new session with the specified configuration.
      * @param config - The configuration for the session, including the platform.
@@ -723,6 +726,23 @@ declare class AgentSession {
      * This method can be overridden to implement platform-specific initialization logic.
      */
     private initPlatform;
+    /**
+     * Starts a new session for the user using in-memory storage.
+     * This method is useful for quick sessions that do not require persistent storage.
+     * @param user - The user for whom the session is being started.
+     * @returns An object containing the user and the session history.
+     */
+    useMemorySession({ user, }: {
+        /**
+         * The user for whom the session is being started.
+         * This is required to create or resume a session.
+         */
+        user: UserBase;
+    }): Promise<{
+        user: UserBase;
+        session: CoreMessage[];
+        saveHistory: <T>(data: ConversationDB<T>) => Promise<CoreMessage[]>;
+    }>;
     /**
      * Starts a new session for the user.
      * If the session file does not exist, it creates a new one.
@@ -744,13 +764,14 @@ declare class AgentSession {
     }): Promise<{
         user: UserBase;
         session: CoreMessage[];
+        saveHistory: <T>(data: ConversationDB<T>) => Promise<void>;
     }>;
     /**
      * Saves the conversation history to a JSON file.
      * @param data - The conversation data to be saved.
      * @throws An error if the file cannot be written or if the content is not an array.
      */
-    saveHistory<T>(data: ConversationDB<any>): Promise<void>;
+    private saveHistory;
     /**
      * Retrieves user data from a JSON file.
      * If the user exists, it returns the user data; otherwise, it returns null.

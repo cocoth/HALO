@@ -979,6 +979,7 @@ var AgentSession = class {
   userBase = null;
   userSessionFileName = null;
   sessionFileName = null;
+  memorySession = {};
   /**
    * Creates a new session with the specified configuration.
    * @param config - The configuration for the session, including the platform.
@@ -1011,6 +1012,53 @@ var AgentSession = class {
     }
   }
   /**
+   * Starts a new session for the user using in-memory storage.
+   * This method is useful for quick sessions that do not require persistent storage.
+   * @param user - The user for whom the session is being started.
+   * @returns An object containing the user and the session history.
+   */
+  async useMemorySession({
+    user
+  }) {
+    const sessionKey = user.phone || user.email || user.username || user.name || "unknown";
+    this.userBase = user;
+    if (!this.memorySession[sessionKey]) {
+      this.memorySession[sessionKey] = [];
+    }
+    return {
+      user: this.userBase,
+      session: this.memorySession[sessionKey],
+      saveHistory: async (data) => {
+        let coreMsg;
+        if ("text" in data && typeof data.text === "string") {
+          coreMsg = {
+            role: data.role,
+            content: [
+              {
+                type: "text",
+                text: data.text
+              }
+            ]
+          };
+        } else if ("content" in data) {
+          coreMsg = {
+            role: data.role,
+            content: [
+              {
+                type: "text",
+                text: typeof data.content === "string" ? data.content : JSON.stringify(data.content, null, 2)
+              }
+            ]
+          };
+        } else {
+          throw new Error("Invalid data format for saveHistory.");
+        }
+        this.memorySession[sessionKey].push(coreMsg);
+        return this.memorySession[sessionKey];
+      }
+    };
+  }
+  /**
    * Starts a new session for the user.
    * If the session file does not exist, it creates a new one.
    * If it exists, it resumes the session from the file.
@@ -1039,9 +1087,22 @@ var AgentSession = class {
       fileName: this.sessionFileName
     });
     if (session && session.session.length > 0) {
-      return session;
+      return {
+        user: session.user,
+        session: session.session,
+        saveHistory: async (data) => {
+          return this.saveHistory(data);
+        }
+      };
     }
-    return await this.createNewJSONFileSession({ user, fileName: this.sessionFileName });
+    const createdNewSession = await this.createNewJSONFileSession({ user, fileName: this.sessionFileName });
+    return {
+      user: createdNewSession.user,
+      session: createdNewSession.session,
+      saveHistory: async (data) => {
+        return this.saveHistory(data);
+      }
+    };
   }
   /**
    * Saves the conversation history to a JSON file.
@@ -1096,7 +1157,7 @@ var AgentSession = class {
     });
     const message = [];
     history.forEach((item) => {
-      if ("text" in item && item.role === "user") {
+      if ("text" in item && item.role === "user" && typeof item.text === "string") {
         message.push({
           role: item.role,
           content: [
@@ -1106,7 +1167,7 @@ var AgentSession = class {
             }
           ]
         });
-      } else if ("text" in item && item.role === "assistant") {
+      } else if ("text" in item && item.role === "assistant" && typeof item.text === "string") {
         message.push({
           role: item.role,
           content: [
