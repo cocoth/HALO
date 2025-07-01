@@ -141,7 +141,7 @@ type AtLeastOne<T, Keys extends keyof T = keyof T> = Keys extends keyof T ? Requ
  *   @property text - The content of the message.
  *   @property timestamp - The timestamp of when the message was sent.
  */
-type ConversationDB<T = any> = {
+type ConversationDB<T = string> = {
     role: "user" | "assistant";
     timestamp: Date;
 } & (T extends string ? {
