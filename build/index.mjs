@@ -60,6 +60,12 @@ var Time = class _Time {
   static logFormat(dateParts) {
     return `${dateParts.day}/${dateParts.month}/${dateParts.year}:${dateParts.hour}:${dateParts.minute}:${dateParts.second}`;
   }
+  /**
+   * Formats a date to a human-readable string.
+   * @param date The date to format.
+   * @param timeZone The time zone to use for formatting.
+   * @returns The formatted date string.
+   */
   static formatDateToHumanReadable(date, timeZone) {
     const dateParts = _Time.formatDateToParts(date, timeZone);
     return `${dateParts.day}/${dateParts.month}/${dateParts.year} ${dateParts.hour}:${dateParts.minute}:${dateParts.second}`;
@@ -151,6 +157,7 @@ var Logger = class {
 
 // src/core/agent.ts
 import { createOpenAI } from "@ai-sdk/openai";
+import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import {
   generateObject,
   generateText,
@@ -304,7 +311,6 @@ var IOF = class _IOF {
   static mkdir(dirPath) {
     try {
       if (!fs.existsSync(dirPath)) {
-        Logger.info(`Creating directory: ${dirPath}`);
         fs.mkdirSync(dirPath, { recursive: true });
       }
     } catch (error) {
@@ -319,7 +325,6 @@ var IOF = class _IOF {
   static rm(dirPath) {
     try {
       if (fs.existsSync(dirPath)) {
-        Logger.info(`Removing: ${dirPath}`);
         fs.rmSync(dirPath, { recursive: true, force: true });
       }
     } catch (error) {
@@ -556,9 +561,6 @@ var IOF = class _IOF {
   }
 };
 
-// src/core/agent.ts
-import { createGoogleGenerativeAI } from "@ai-sdk/google";
-
 // src/core/tools.ts
 import { tool } from "ai";
 import { z } from "zod";
@@ -720,7 +722,6 @@ var AiAgent = class {
         tools: Object.keys(this.toolSet).length > 0 ? this.toolSet : void 0,
         maxSteps: Object.keys(this.toolSet).length > 0 ? Number.MAX_SAFE_INTEGER : void 0,
         prompt
-        // toolChoice: Object.keys(this.toolSet).length > 0 ? "required" : "auto"
       });
     }
     return await generateText({
@@ -728,7 +729,6 @@ var AiAgent = class {
       system: await this.systemPrompt(),
       tools: Object.keys(this.toolSet).length > 0 ? this.toolSet : void 0,
       maxSteps: Object.keys(this.toolSet).length > 0 ? Number.MAX_SAFE_INTEGER : void 0,
-      // toolChoice: Object.keys(this.toolSet).length > 0 ? "required" : "required",
       messages
     });
   }
@@ -925,7 +925,6 @@ var terminal_exports = {};
 __export(terminal_exports, {
   ClearTerminal: () => ClearTerminal,
   CloseTerminal: () => CloseTerminal,
-  Help: () => Help,
   ParseEnvKeys: () => ParseEnvKeys,
   Question: () => Question,
   Sleep: () => Sleep
@@ -956,15 +955,6 @@ async function ClearTerminal() {
 }
 async function Sleep(duration) {
   return new Promise((resolve2) => setTimeout(resolve2, duration * 1e3));
-}
-async function Help() {
-  console.log(`
-Available commands:
-  - help: Show this help message
-  - exit: Exit the terminal
-  - clear: Clear the terminal screen
-  `);
-  return terminal.prompt();
 }
 function ParseEnvKeys(prefix) {
   const envKeys = Object.keys(process.env).filter(
@@ -1241,11 +1231,10 @@ var AgentSession = class {
 };
 
 // index.ts
-import { CoreMessage as CoreMessage2 } from "ai";
+import { tool as tool2 } from "ai";
 export {
   AgentSession,
   AiAgent,
-  CoreMessage2 as CoreMessage,
   GenerateRandomString,
   GenerateUUID,
   HashWithSHA256,
@@ -1256,6 +1245,7 @@ export {
   Time,
   Tools,
   mimeType,
-  terminalColors
+  terminalColors,
+  tool2 as tool
 };
 //# sourceMappingURL=index.mjs.map

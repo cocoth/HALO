@@ -32,7 +32,6 @@ var index_exports = {};
 __export(index_exports, {
   AgentSession: () => AgentSession,
   AiAgent: () => AiAgent,
-  CoreMessage: () => import_ai3.CoreMessage,
   GenerateRandomString: () => GenerateRandomString,
   GenerateUUID: () => GenerateUUID,
   HashWithSHA256: () => HashWithSHA256,
@@ -43,7 +42,8 @@ __export(index_exports, {
   Time: () => Time,
   Tools: () => Tools,
   mimeType: () => mimeType,
-  terminalColors: () => terminalColors
+  terminalColors: () => terminalColors,
+  tool: () => import_ai3.tool
 });
 module.exports = __toCommonJS(index_exports);
 
@@ -103,6 +103,12 @@ var Time = class _Time {
   static logFormat(dateParts) {
     return `${dateParts.day}/${dateParts.month}/${dateParts.year}:${dateParts.hour}:${dateParts.minute}:${dateParts.second}`;
   }
+  /**
+   * Formats a date to a human-readable string.
+   * @param date The date to format.
+   * @param timeZone The time zone to use for formatting.
+   * @returns The formatted date string.
+   */
   static formatDateToHumanReadable(date, timeZone) {
     const dateParts = _Time.formatDateToParts(date, timeZone);
     return `${dateParts.day}/${dateParts.month}/${dateParts.year} ${dateParts.hour}:${dateParts.minute}:${dateParts.second}`;
@@ -194,6 +200,7 @@ var Logger = class {
 
 // src/core/agent.ts
 var import_openai = require("@ai-sdk/openai");
+var import_google = require("@ai-sdk/google");
 var import_ai2 = require("ai");
 
 // src/lib/iof.ts
@@ -343,7 +350,6 @@ var IOF = class _IOF {
   static mkdir(dirPath) {
     try {
       if (!fs.existsSync(dirPath)) {
-        Logger.info(`Creating directory: ${dirPath}`);
         fs.mkdirSync(dirPath, { recursive: true });
       }
     } catch (error) {
@@ -358,7 +364,6 @@ var IOF = class _IOF {
   static rm(dirPath) {
     try {
       if (fs.existsSync(dirPath)) {
-        Logger.info(`Removing: ${dirPath}`);
         fs.rmSync(dirPath, { recursive: true, force: true });
       }
     } catch (error) {
@@ -595,9 +600,6 @@ var IOF = class _IOF {
   }
 };
 
-// src/core/agent.ts
-var import_google = require("@ai-sdk/google");
-
 // src/core/tools.ts
 var import_ai = require("ai");
 var import_zod = require("zod");
@@ -759,7 +761,6 @@ var AiAgent = class {
         tools: Object.keys(this.toolSet).length > 0 ? this.toolSet : void 0,
         maxSteps: Object.keys(this.toolSet).length > 0 ? Number.MAX_SAFE_INTEGER : void 0,
         prompt
-        // toolChoice: Object.keys(this.toolSet).length > 0 ? "required" : "auto"
       });
     }
     return await (0, import_ai2.generateText)({
@@ -767,7 +768,6 @@ var AiAgent = class {
       system: await this.systemPrompt(),
       tools: Object.keys(this.toolSet).length > 0 ? this.toolSet : void 0,
       maxSteps: Object.keys(this.toolSet).length > 0 ? Number.MAX_SAFE_INTEGER : void 0,
-      // toolChoice: Object.keys(this.toolSet).length > 0 ? "required" : "required",
       messages
     });
   }
@@ -964,7 +964,6 @@ var terminal_exports = {};
 __export(terminal_exports, {
   ClearTerminal: () => ClearTerminal,
   CloseTerminal: () => CloseTerminal,
-  Help: () => Help,
   ParseEnvKeys: () => ParseEnvKeys,
   Question: () => Question,
   Sleep: () => Sleep
@@ -995,15 +994,6 @@ async function ClearTerminal() {
 }
 async function Sleep(duration) {
   return new Promise((resolve2) => setTimeout(resolve2, duration * 1e3));
-}
-async function Help() {
-  console.log(`
-Available commands:
-  - help: Show this help message
-  - exit: Exit the terminal
-  - clear: Clear the terminal screen
-  `);
-  return terminal.prompt();
 }
 function ParseEnvKeys(prefix) {
   const envKeys = Object.keys(process.env).filter(
@@ -1285,7 +1275,6 @@ var import_ai3 = require("ai");
 0 && (module.exports = {
   AgentSession,
   AiAgent,
-  CoreMessage,
   GenerateRandomString,
   GenerateUUID,
   HashWithSHA256,
@@ -1296,6 +1285,7 @@ var import_ai3 = require("ai");
   Time,
   Tools,
   mimeType,
-  terminalColors
+  terminalColors,
+  tool
 });
 //# sourceMappingURL=index.js.map

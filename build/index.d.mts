@@ -1,8 +1,6 @@
-import { openai } from '@ai-sdk/openai';
 import * as ai from 'ai';
-import { GenerateTextResult, ToolSet, StreamTextResult, GenerateObjectResult, CoreMessage } from 'ai';
-export { CoreMessage } from 'ai';
-import { google } from '@ai-sdk/google';
+import { ToolSet, GenerateTextResult, StreamTextResult, GenerateObjectResult, CoreMessage } from 'ai';
+export { CoreMessage, ToolSet, tool } from 'ai';
 import { z, Schema } from 'zod';
 import { FSWatcherKnownEventMap } from 'chokidar';
 
@@ -14,10 +12,121 @@ import { FSWatcherKnownEventMap } from 'chokidar';
  *   @property phone - The phone number of the user.
  */
 interface UserBase {
+    /**
+     * The name of the user.
+     * This property is optional and can be used to store the user's full name.
+     */
     name?: string;
+    /**
+     * The username of the user.
+     * This property is optional and can be used to store the user's unique identifier.
+     */
     username?: string;
+    /**
+     * The email address of the user.
+     * This property is optional and can be used to store the user's email address.
+     */
     email?: string;
+    /**
+     * The phone number of the user.
+     * This property is optional and can be used to store the user's phone number.
+     */
     phone?: string;
+}
+type GoogleGenerativeAIModelId = 'gemini-1.5-flash' | 'gemini-1.5-flash-latest' | 'gemini-1.5-flash-001' | 'gemini-1.5-flash-002' | 'gemini-1.5-flash-8b' | 'gemini-1.5-flash-8b-latest' | 'gemini-1.5-flash-8b-001' | 'gemini-1.5-pro' | 'gemini-1.5-pro-latest' | 'gemini-1.5-pro-001' | 'gemini-1.5-pro-002' | 'gemini-2.0-flash' | 'gemini-2.0-flash-001' | 'gemini-2.0-flash-live-001' | 'gemini-2.0-flash-lite' | 'gemini-2.0-pro-exp-02-05' | 'gemini-2.0-flash-thinking-exp-01-21' | 'gemini-2.0-flash-exp' | 'gemini-2.5-pro-exp-03-25' | 'gemini-2.5-pro-preview-05-06' | 'gemini-2.5-flash-preview-04-17' | 'gemini-exp-1206' | 'gemma-3-27b-it' | 'learnlm-1.5-pro-experimental' | (string & {});
+type OpenAIResponsesModelId = 'o1' | 'o1-2024-12-17' | 'o1-mini' | 'o1-mini-2024-09-12' | 'o1-preview' | 'o1-preview-2024-09-12' | 'o3-mini' | 'o3-mini-2025-01-31' | 'o3' | 'o3-2025-04-16' | 'o4-mini' | 'o4-mini-2025-04-16' | 'gpt-4.1' | 'gpt-4.1-2025-04-14' | 'gpt-4.1-mini' | 'gpt-4.1-mini-2025-04-14' | 'gpt-4.1-nano' | 'gpt-4.1-nano-2025-04-14' | 'gpt-4o' | 'gpt-4o-2024-05-13' | 'gpt-4o-2024-08-06' | 'gpt-4o-2024-11-20' | 'gpt-4o-audio-preview' | 'gpt-4o-audio-preview-2024-10-01' | 'gpt-4o-audio-preview-2024-12-17' | 'gpt-4o-search-preview' | 'gpt-4o-search-preview-2025-03-11' | 'gpt-4o-mini-search-preview' | 'gpt-4o-mini-search-preview-2025-03-11' | 'gpt-4o-mini' | 'gpt-4o-mini-2024-07-18' | 'gpt-4-turbo' | 'gpt-4-turbo-2024-04-09' | 'gpt-4-turbo-preview' | 'gpt-4-0125-preview' | 'gpt-4-1106-preview' | 'gpt-4' | 'gpt-4-0613' | 'gpt-4.5-preview' | 'gpt-4.5-preview-2025-02-27' | 'gpt-3.5-turbo-0125' | 'gpt-3.5-turbo' | 'gpt-3.5-turbo-1106' | 'chatgpt-4o-latest' | (string & {});
+/**
+ * ModelID is a union type that represents the model identifiers for different AI services.
+ * It includes Google Gemini model IDs and OpenAI model IDs.
+ * This allows for flexibility in specifying which model to use for the AI agent.
+ */
+type ModelID = GoogleGenerativeAIModelId | OpenAIResponsesModelId;
+/**
+ * Represents the configuration for an AI agent.
+ * This configuration is used to connect to an AI service and define the model and tools available for the agent.
+ * It includes the agent URL, API key, model ID, fallback model, system prompt file, and a set of tools.
+ *
+ * The type parameter `<MODELID>` represents the model identifier type for the AI agent.
+ * It is used to specify which model the agent should use, such as a Google Gemini model (e.g., "gemini-1.5-flash")
+ * or an OpenAI model (e.g., "gpt-4o"). This allows the `AiAgentConfig` interface to be generic and flexible,
+ * supporting different model ID types depending on the AI service being integrated.
+ *
+ * @template ExtraModelID - A string type that extends the model ID.
+ * This allows for additional model IDs to be specified beyond the default set.
+ * @example
+ * type ExtraModelID = "gpt-4o" | "gpt-3.5-turbo";
+ * const agentConfig: AiAgentConfig<typeof ExtraModelID> = {
+ *   agentUrl: "https://api.example.com/ai",
+ *   apiKey: "your-api-key",
+ *   model: "gpt-4o",
+ *   fallbackModel: "gpt-3.5-turbo",
+ *   systemPromptFile: "/path/to/system/prompt.txt",
+ *   tools: {
+ *     getCurrentTime: TaskHandler.getCurrentTime
+ *   }
+ * }
+ *
+ * @property `agentUrl` - The URL of the AI agent service.
+ * @property `apiKey` - The API key for the AI agent.
+ * @property `model` - The model ID to use for the AI agent, which can be a Google Gemini model or an OpenAI model.
+ * @property `fallbackModel` - The model ID that can be used as a fallback if the primary
+ * model fails or is not available.
+ * @property `systemPromptFile` - The file path to the system prompt. If not provided, the system prompt will be empty.
+ * @property `tools` - A set of tools that the AI agent can use to perform specific tasks.
+ * These tools can be used to interact with external services or perform actions.
+ */
+interface AiAgentConfig<ExtraModelID extends string = ModelID> {
+    /**
+     * The URL of the AI agent service.
+     * This is required to connect to the AI service.
+     */
+    agentUrl: string;
+    /**
+     * The API key for the AI agent.
+     * This is required to authenticate requests to the AI service.
+     */
+    apiKey: string;
+    /**
+     * The model ID to use for the AI agent.
+     * It can be a Google Gemini model (e.g., "gemini-1.5-flash") or an OpenAI model (e.g., "gpt-4o").
+     * If not provided, defaults to "gpt-4o".
+     */
+    model: ExtraModelID | ModelID;
+    /**
+     * fallbackModel is an model ID that can be used as a fallback
+     * if the primary model fails or is not available.
+     */
+    fallbackModel: ExtraModelID | ModelID;
+    /**
+    * The file path to the system prompt.
+    * If not provided, the system prompt will be empty.
+    */
+    systemPromptFile?: string;
+    /**
+     * A set of tools that the AI agent can use to perform specific tasks.
+     * These tools can be used to interact with external services or perform actions.
+     * The tools are defined using the `tool` function from the `ai` library.
+     * For example, you can define tools like `getCurrentTime` or `fetchData`.
+     * @example
+     * const tools: ToolSet = {
+     *   getCurrentTime: tool({
+     *     description: "Get the current time",
+     *     parameters: [],
+     *     handler: async () => {
+     *       return new Date().toISOString();
+     *     }
+     *   }),
+     *   fetchData: tool({
+     *     description: "Fetch data from an API",
+     *     parameters: ["url"],
+     *     handler: async (url: string) => {
+     *       const response = await fetch(url);
+     *       return response.json();
+     *     }
+     *   })
+     * }
+     */
+    tools?: ToolSet;
 }
 /**
  * AtLeastOne is a utility type that ensures at least one of the specified keys in T is required.
@@ -129,45 +238,29 @@ interface InlineData {
     mimeType: string;
 }
 
-type ModelID = Parameters<typeof google | typeof openai>[0];
-interface AiAgentConfig {
-    /**
-     * The URL of the AI agent service.
-     * This is required to connect to the AI service.
-     */
-    agentUrl: string;
-    /**
-     * The API key for the AI agent.
-     * This is required to authenticate requests to the AI service.
-     */
-    apiKey: string;
-    /**
-     * The model ID to use for the AI agent.
-     * It can be a Google Gemini model (e.g., "gemini-1.5-flash") or an OpenAI model (e.g., "gpt-4o").
-     * If not provided, defaults to "gpt-4o".
-     */
-    model: LooseToStrict<ModelID>;
-    /**
-     * fallbackModel is an model ID that can be used as a fallback
-     * if the primary model fails or is not available.
-     */
-    fallbackModel: LooseToStrict<ModelID>;
-    /**
-    * The file path to the system prompt.
-    * If not provided, the system prompt will be empty.
-    */
-    systemPromptFile?: string;
-    /**
-     * A set of tools that the AI agent can use to perform specific tasks.
-     * These tools can be used to interact with external services or perform actions.
-     * The tools are defined using the `tool` function from the `ai` library.
-     */
-    tools?: ToolSet;
-}
 /**
  * AiAgent class for interacting with an AI agent via OpenAI API.
  * It initializes the agent with a URL and API key, and allows starting a chat session.
  * The system prompt can be loaded from a specified file.
+ * @params {AiAgentConfig<ModelID>} config - Configuration for the AI agent.
+ * @property {string} agentUrl - The URL of the AI agent service.
+ * @property {string} apiKey - The API key for the AI agent.
+ * @property {ModelID} model - The language model used for generating responses.
+ * @property {ModelID} fallbackModel - Optional fallback model to use if the primary model fails.
+ * @property {string} systemPromptFile - Optional file path for the system prompt.
+ * @property {ToolSet} toolSet - Set of tools available for the AI agent to use.
+ * @description This class provides methods to start a chat session, generate text responses, and handle various tasks.
+ * @example
+ * const agent = new AiAgent({
+ *   agentUrl: "https://api.example.com/ai",
+ *   apiKey: "your-api-key",
+ *   model: "gpt-4o",
+ *   fallbackModel: "gpt-3.5-turbo",
+ *   systemPromptFile: "/path/to/system/prompt.txt",
+ *   tools: {
+ *     getCurrentTime: TaskHandler.getCurrentTime
+ *   }
+ * });
  */
 declare class AiAgent {
     private aiAgentUrl;
@@ -321,17 +414,11 @@ declare class Tools {
     static getCurrentTime(): Promise<string>;
 }
 
-/** IOF (Input/Output File) class for handling file operations
- * - Calculates a SHA-256 hash of a given buffer.
- * - Provides a method to get the file path based on the hash.
- * - Allows setting a file location by saving the file and storing its metadata.
- * - Downloads a file from a URL and saves it to a specified path.
- * - Calculates the size of a file based on its buffer.
- * - Retrieves file paths based on hashes or buffers.
- * - Handles file storage operations using a repository pattern.
- * - Uses the FileStorageRepo for database interactions related to file storage.
- * - Uses the UserRepo for user-related database interactions.
- **/
+/**
+ * IOF (Input/Output File) class provides methods for file and directory operations,
+ * including creating directories, removing files, watching directories for changes,
+ * reading and writing JSON files, calculating file hashes and sizes, and saving files.
+ */
 declare class IOF {
     /**
      * Creates a directory if it does not exist.
@@ -464,6 +551,18 @@ declare class IOF {
     }>;
 }
 
+/**
+ * Utility functions for terminal colors.
+ * These functions provide ANSI escape codes for styling terminal output.
+ * @module terminalColors
+ * @description
+ * This module exports an object containing ANSI escape codes for various text styles and colors.
+ * You can use these codes to format terminal output in Node.js applications.
+ * @example
+ * import { terminalColors as TC } from 'halo';
+ * console.log(`${TC.R}This text is red${TC.reset}`);
+ * @see {@link https://en.wikipedia.org/wiki/ANSI_escape_code} for more information
+ */
 declare const terminalColors: {
     reset: string;
     bright: string;
@@ -528,11 +627,15 @@ declare function ClearTerminal(): Promise<void>;
  * @returns A promise that resolves after the specified duration.
  */
 declare function Sleep(duration: number): Promise<void>;
-declare function Help(): Promise<void>;
 /**
  * Parses environment variables that start with a given prefix.
  * @param prefix The prefix to filter environment variables.
  * @returns An object containing arrays of keys and values.
+ * @example
+ * const envVars = ParseEnvKeys("AI_TOKEN_");
+ * console.log(envVars.keys); // ['AI_TOKEN_KEY']
+ * console.log(envVars.values); // ['your_token_value']
+ * @description This function filters environment variables that start with the specified prefix,
  */
 declare function ParseEnvKeys(prefix: string): {
     keys: string[];
@@ -541,12 +644,11 @@ declare function ParseEnvKeys(prefix: string): {
 
 declare const terminal_ClearTerminal: typeof ClearTerminal;
 declare const terminal_CloseTerminal: typeof CloseTerminal;
-declare const terminal_Help: typeof Help;
 declare const terminal_ParseEnvKeys: typeof ParseEnvKeys;
 declare const terminal_Question: typeof Question;
 declare const terminal_Sleep: typeof Sleep;
 declare namespace terminal {
-  export { terminal_ClearTerminal as ClearTerminal, terminal_CloseTerminal as CloseTerminal, terminal_Help as Help, terminal_ParseEnvKeys as ParseEnvKeys, terminal_Question as Question, terminal_Sleep as Sleep };
+  export { terminal_ClearTerminal as ClearTerminal, terminal_CloseTerminal as CloseTerminal, terminal_ParseEnvKeys as ParseEnvKeys, terminal_Question as Question, terminal_Sleep as Sleep };
 }
 
 declare class Time {
@@ -554,6 +656,12 @@ declare class Time {
     private static formatDateString;
     private static formateDateToSaveString;
     private static logFormat;
+    /**
+     * Formats a date to a human-readable string.
+     * @param date The date to format.
+     * @param timeZone The time zone to use for formatting.
+     * @returns The formatted date string.
+     */
     static formatDateToHumanReadable(date: Date, timeZone: string): string;
     /**
      * Returns the current time formatted as a string suitable for saving.
@@ -682,4 +790,4 @@ declare class AgentSession {
     private resumeJSONFileSession;
 }
 
-export { AgentSession, AiAgent, type AtLeastOne, type ChatBuilder, type ConversationDB, type FileDownloadInterface, type FileInterface, type FileStorageInterface, GenerateRandomString, GenerateUUID, HashWithSHA256, IOF, type InlineData, Logger, type LooseToStrict, type StartChatResult, TaskHandler, terminal as Terminal, Time, Tools, type UserBase, mimeType, terminalColors };
+export { AgentSession, AiAgent, type AiAgentConfig, type AtLeastOne, type ChatBuilder, type ConversationDB, type FileDownloadInterface, type FileInterface, type FileStorageInterface, GenerateRandomString, GenerateUUID, HashWithSHA256, IOF, type InlineData, Logger, type LooseToStrict, type ModelID, type StartChatResult, TaskHandler, terminal as Terminal, Time, Tools, type UserBase, mimeType, terminalColors };
