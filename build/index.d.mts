@@ -1,9 +1,9 @@
 import { openai } from '@ai-sdk/openai';
 import * as ai from 'ai';
-import { ToolSet, CoreMessage } from 'ai';
+import { GenerateTextResult, ToolSet, StreamTextResult, GenerateObjectResult, CoreMessage } from 'ai';
 export { CoreMessage } from 'ai';
 import { google } from '@ai-sdk/google';
-import { z } from 'zod';
+import { z, Schema } from 'zod';
 import { FSWatcherKnownEventMap } from 'chokidar';
 
 /**
@@ -32,11 +32,14 @@ type AtLeastOne<T, Keys extends keyof T = keyof T> = Keys extends keyof T ? Requ
  *   @property text - The content of the message.
  *   @property timestamp - The timestamp of when the message was sent.
  */
-interface ConversationDB {
+type ConversationDB<T = undefined> = {
     role: "user" | "assistant";
-    text: string;
     timestamp: Date;
-}
+} & (T extends undefined ? {
+    text: string;
+} : {
+    content: T;
+});
 /**
  * LooseToStrict is a utility type that converts a type T to a stricter version.
  * It ensures that if T is a string, it will not be converted to never.
@@ -48,7 +51,7 @@ type LooseToStrict<T> = T extends any ? string extends T ? never : T : never;
  * @property text - The input text used to start the chat.
  * @property response - The response received after starting the chat. The type is generic and can vary.
  */
-type StartChatTextResult = {
+type ChatTextResult = {
     text: string;
     response: any;
 };
@@ -57,20 +60,30 @@ type StartChatTextResult = {
  *   @property textStream - The generated text response as a stream.
  *   @property response - Additional response data.
  */
-type StartChatStreamResult = {
+type ChatStreamResult = {
     textStream: AsyncIterable<string>;
     response: any;
 };
 /**
- * Represents the result of starting a chat, which can be either a text result or a textStream result.
- * This type is a union of StartChatTextResult and StartChatStreamResult.
- * It allows for flexibility in handling different types of chat responses.
- * if you use `streamMethod` as "text", it will return `StartChatTextResult`.
- * If you use `streamMethod` as "stream", it will return `StartChatStreamResult`.
- * @see StartChatTextResult
- * @see StartChatStreamResult
+ * Represents a chat builder interface that defines methods for generating text and streaming responses.
+ *   @property generateText - A method to generate a text response from the chat.
+ *   @property generateStream - A method to generate a stream of text responses from the chat.
  */
-type StartChatResult = StartChatTextResult | StartChatStreamResult;
+interface ChatBuilder {
+    generateText(): Promise<GenerateTextResult<ToolSet, never>>;
+    generateStream(): Promise<StreamTextResult<ToolSet, never>>;
+    generateObject<OBJECT>(schema: z.Schema<OBJECT, z.ZodTypeDef, any> | Schema<OBJECT>): Promise<GenerateObjectResult<OBJECT>>;
+}
+/**
+ * Represents the result of starting a chat, which can be either a text result or a textStream result.
+ * This type is a union of ChatTextResult and ChatStreamResult.
+ * It allows for flexibility in handling different types of chat responses.
+ * if you use `streamMethod` as "text", it will return `ChatTextResult`.
+ * If you use `streamMethod` as "stream", it will return `ChatStreamResult`.
+ * @see ChatTextResult
+ * @see ChatStreamResult
+ */
+type StartChatResult = ChatTextResult | ChatStreamResult;
 /**
  * Represents a file with its data, name, and path.
  *   @property filedata - The binary data of the file.
@@ -140,12 +153,6 @@ interface AiAgentConfig {
      */
     fallbackModel: LooseToStrict<ModelID>;
     /**
-     * The method to use for streaming responses.
-     * Can be "stream" for streaming responses or "text" for text responses.
-     * Default is "text".
-     */
-    streamMethod?: "text" | "stream";
-    /**
     * The file path to the system prompt.
     * If not provided, the system prompt will be empty.
     */
@@ -178,6 +185,16 @@ declare class AiAgent {
      */
     private systemPrompt;
     /**
+     * Generates an object based on either a prompt string or an array of messages, validated against a provided schema.
+     *
+     * @param messages - Optional array of `CoreMessage` objects to use as context for generation.
+     * @param prompt - Optional prompt string to use for generation. Must be a string if provided.
+     * @param schema - The schema (Zod or custom Schema) to validate the generated object against.
+     * @returns A promise that resolves to the generated object, validated by the provided schema.
+     * @throws Will throw an error if `prompt` is not a string or if `messages` is not an array of `CoreMessage`.
+     */
+    private generateObject;
+    /**
      * Generates a stream of text responses based on the provided messages.
      * It uses the AI agent's model and system prompt to generate the responses.
      * If tools are defined, it will use them in the generation process.
@@ -197,24 +214,56 @@ declare class AiAgent {
      */
     private generateStream;
     /**
-     * Starts a chat session with the AI agent.
-     * It saves the user's message and response to the database.
-     * If a session is provided, it continues the conversation with the existing messages.
-     * If the prompt is invalid or empty, it throws an error.
+     * Queries the AI agent with a prompt and optional session messages.
+     * It returns a ChatBuilder object that can be used to generate text or stream responses.
      *
-     * @param user - The user initiating the chat session.
      * @param session - An optional array of previous messages in the chat session.
      * @param prompt - The user's message to start the chat.
      * @param media - Optional media data to include in the chat.
-     * @returns An object containing the text stream, text response, and response object.
+     * @returns A ChatBuilder object with methods to generate text or stream responses.
      */
-    startChat({ user, session, prompt, media, }: {
+    query({ session, prompt, media, }: {
         /**
-         * The user initiating the chat session.
-         * This can be a user base object containing user details like name and phone number.
-         * If not provided, the chat will not include user-specific information.
+         * An optional array of previous messages in the chat session.
+         * This allows the AI agent to continue the conversation with the existing context.
          */
-        user?: UserBase | null;
+        session?: CoreMessage[] | null;
+        /**
+         * The user's message to start the chat.
+         * This should be a non-empty string representing the user's input.
+         */
+        prompt: string;
+        /**
+         * Optional media data to include in the chat.
+         * This can be an inline data object containing file data and mime type.
+         */
+        media?: InlineData | null;
+    }): Promise<ChatBuilder>;
+    /**
+     * Starts a chat session with the AI agent.
+     * It initializes the conversation and returns the AI's response.
+     *
+     * @param streamMethod - The method to use for streaming responses.
+     * Can be "stream" for streaming responses or "text" for text responses.
+     * Default is "text".
+     * @param session - An optional array of previous messages in the chat session.
+     * This allows the AI agent to continue the conversation with the existing context.
+     * @param prompt - The user's message to start the chat.
+     * This should be a non-empty string representing the user's input.
+     * If the prompt is invalid or empty, an error will be thrown.
+     * @param media - Optional media data to include in the chat.
+     * This can be an inline data object containing file data and mime type.
+     * If not provided, the chat will not include any media.
+     * @returns A promise that resolves to the AI's response, which can be either a text response or a stream of text responses.
+     * @throws Will throw an error if the prompt is not a string or if the session is invalid.
+     */
+    startChat({ streamMethod, session, prompt, media, }: {
+        /**
+       * The method to use for streaming responses.
+       * Can be "stream" for streaming responses or "text" for text responses.
+       * Default is "text".
+       */
+        streamMethod?: "text" | "stream";
         /**
          * An optional array of previous messages in the chat session.
          * This allows the AI agent to continue the conversation with the existing context.
@@ -234,6 +283,25 @@ declare class AiAgent {
          */
         media?: InlineData | null;
     }): Promise<StartChatResult>;
+    /**
+     * Creates an array of messages for the chat session.
+     * It includes the previous session messages and the user's prompt.
+     * If media is provided, it will be included in the user's message.
+     *
+     * @param session - An optional array of previous messages in the chat session.
+     * @param prompt - The user's message to start the chat.
+     * @param media - Optional media data to include in the chat.
+     * @returns An array of CoreMessage objects representing the chat session.
+     */
+    private createMessages;
+    /**
+     * Gets the AI's response based on the provided messages.
+     * It either generates a text response or a stream of text responses.
+     *
+     * @param messages - An array of CoreMessage objects representing the conversation history.
+     * @returns A promise that resolves to the AI's response, which can be either a text response or a stream of text responses.
+     */
+    private getResponse;
 }
 
 declare const TaskHandler: {
@@ -574,7 +642,7 @@ declare class AgentSession {
      * @param data - The conversation data to be saved.
      * @throws An error if the file cannot be written or if the content is not an array.
      */
-    saveHistory(data: ConversationDB): Promise<void>;
+    saveHistory<T>(data: ConversationDB<any>): Promise<void>;
     /**
      * Retrieves user data from a JSON file.
      * If the user exists, it returns the user data; otherwise, it returns null.
@@ -614,4 +682,4 @@ declare class AgentSession {
     private resumeJSONFileSession;
 }
 
-export { AgentSession, AiAgent, type AtLeastOne, type ConversationDB, type FileDownloadInterface, type FileInterface, type FileStorageInterface, GenerateRandomString, GenerateUUID, HashWithSHA256, IOF, type InlineData, Logger, type LooseToStrict, type StartChatResult, TaskHandler, terminal as Terminal, Time, Tools, type UserBase, mimeType, terminalColors };
+export { AgentSession, AiAgent, type AtLeastOne, type ChatBuilder, type ConversationDB, type FileDownloadInterface, type FileInterface, type FileStorageInterface, GenerateRandomString, GenerateUUID, HashWithSHA256, IOF, type InlineData, Logger, type LooseToStrict, type StartChatResult, TaskHandler, terminal as Terminal, Time, Tools, type UserBase, mimeType, terminalColors };
