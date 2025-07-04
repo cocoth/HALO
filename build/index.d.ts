@@ -245,7 +245,8 @@ interface FileStorageInterface {
     fileuri: string;
     filehash: string;
     filesize: number;
-    filetype: string;
+    mimeType: string;
+    inlineData?: string;
 }
 /**
  * Represents the data required to download a file from a URL.

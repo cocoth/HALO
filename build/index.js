@@ -538,7 +538,8 @@ var IOF = class _IOF {
         fileuri: fullPath,
         filehash: hash,
         filesize: size,
-        filetype: type
+        mimeType: type,
+        inlineData: Buffer.from(data.filedata).toString("base64")
       };
     } catch (error) {
       throw new Error(`Failed to set file location: ${error instanceof Error ? error.message : String(error)}`);
@@ -561,7 +562,8 @@ var IOF = class _IOF {
         fileuri: filePath,
         filehash: _IOF.calculateHashByBuffer(Buffer.from(buffer)),
         filesize: _IOF.calculateSizeByBuffer(Buffer.from(buffer)),
-        filetype: mimeType(fileName)
+        mimeType: mimeType(fileName),
+        inlineData: Buffer.from(buffer).toString("base64")
       };
     } catch (error) {
       throw new Error(`Failed to download file: ${error}`);
