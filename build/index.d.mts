@@ -129,6 +129,32 @@ interface AiAgentConfig<ExtraModelID extends string = ModelID> {
     tools?: ToolSet;
 }
 /**
+ * Represents the result of a session with an AI agent.
+ * This interface defines the structure of the session result, including the user, session messages, and a method to save conversation history.
+ *
+ * @property `user` - The user associated with the session. This property is required to identify the user interacting with the AI agent.
+ * @property `session` - The AI agent configuration used for the session. This property is required to specify the AI agent's settings, including the model and tools.
+ * @property `saveHistory` - A method to save the conversation history between the user and the AI agent.
+ * It takes a generic type parameter `T` for flexibility in storing different types of conversation data.
+ */
+interface SessionResult {
+    /**
+     * The user associated with the session.
+     * This property is required to identify the user interacting with the AI agent.
+     */
+    user: UserBase;
+    /**
+     * The AI agent configuration used for the session.
+     * This property is required to specify the AI agent's settings, including the model and tools.
+     */
+    session: CoreMessage[];
+    /**
+     * The messages exchanged during the session.
+     * This property is required to store the conversation history between the user and the AI agent.
+     */
+    saveHistory: <T>(data: ConversationDB<T>) => Promise<CoreMessage[]>;
+}
+/**
  * AtLeastOne is a utility type that ensures at least one of the specified keys in T is required.
  * It allows for flexibility in defining types where at least one property must be present.
  *
@@ -738,11 +764,7 @@ declare class AgentSession {
          * This is required to create or resume a session.
          */
         user: UserBase;
-    }): Promise<{
-        user: UserBase;
-        session: CoreMessage[];
-        saveHistory: <T>(data: ConversationDB<T>) => Promise<CoreMessage[]>;
-    }>;
+    }): Promise<SessionResult>;
     /**
      * Starts a new session for the user.
      * If the session file does not exist, it creates a new one.
@@ -761,11 +783,7 @@ declare class AgentSession {
          * The name of the session file. If not provided, it defaults to a combination of the sessionFilePrefix and the user's username, email, phone, or name.
          */
         sessionFileName?: string;
-    }): Promise<{
-        user: UserBase;
-        session: CoreMessage[];
-        saveHistory: <T>(data: ConversationDB<T>) => Promise<void>;
-    }>;
+    }): Promise<SessionResult>;
     /**
      * Saves the conversation history to a JSON file.
      * @param data - The conversation data to be saved.
@@ -811,4 +829,4 @@ declare class AgentSession {
     private resumeJSONFileSession;
 }
 
-export { AgentSession, AiAgent, type AiAgentConfig, type AtLeastOne, type ChatBuilder, type ConversationDB, type FileDownloadInterface, type FileInterface, type FileStorageInterface, GenerateRandomString, GenerateUUID, HashWithSHA256, IOF, type InlineData, Logger, type LooseToStrict, type ModelID, type StartChatResult, TaskHandler, terminal as Terminal, Time, Tools, type UserBase, mimeType, terminalColors };
+export { AgentSession, AiAgent, type AiAgentConfig, type AtLeastOne, type ChatBuilder, type ConversationDB, type FileDownloadInterface, type FileInterface, type FileStorageInterface, GenerateRandomString, GenerateUUID, HashWithSHA256, IOF, type InlineData, Logger, type LooseToStrict, type ModelID, type SessionResult, type StartChatResult, TaskHandler, terminal as Terminal, Time, Tools, type UserBase, mimeType, terminalColors };

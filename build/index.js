@@ -623,7 +623,6 @@ var Tools = class {
    * This tool does not require any parameters.
    */
   static async getCurrentTime() {
-    Logger.info("Retrieving current time...");
     return Time.getCurrentTimeToHumanReadable();
   }
 };
@@ -1155,11 +1154,12 @@ var AgentSession = class {
     if (!this.userBase) {
       throw new Error("User must be set before saving history.");
     }
-    const filePath = `./${this.folderName}/${this.sessionFilePrefix}${this.userBase?.username || this.userBase?.email || this.userBase?.phone || this.userBase?.name}.json`;
+    const filePath = this.sessionFileName || `./${this.folderName}/${this.sessionFilePrefix}${this.userBase?.username || this.userBase?.email || this.userBase?.phone || this.userBase?.name}.json`;
     await IOF.writeJSONFile({
-      filePath: this.sessionFileName || filePath,
+      filePath,
       data
     });
+    return await this.getHistory(filePath);
   }
   /**
    * Retrieves user data from a JSON file.
