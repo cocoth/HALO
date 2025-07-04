@@ -176,10 +176,7 @@ function mimeType(fileName) {
   switch (ext) {
     // video
     case "mp4":
-    case "m4a":
-    case "m4b":
-    case "m4p":
-    case "m4r":
+      return "video/mp4";
     case "mpeg":
     case "mpg":
     case "mpe":
@@ -212,6 +209,12 @@ function mimeType(fileName) {
     //  audio
     case "mp3":
       return "audio/mpeg";
+    case "m4a":
+      return "audio/mp4";
+    case "m4b":
+    case "m4p":
+    case "m4r":
+      return "audio/mp4";
     case "wav":
       return "audio/wav";
     case "ogg":
