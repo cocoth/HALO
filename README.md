@@ -13,8 +13,6 @@
 
 ```bash
 npm i  git+https://github.com/cocoth/HALO.git
-cd HALO
-npm i 
 ```
 
 ## How to use this library?
