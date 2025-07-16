@@ -19,7 +19,8 @@ npm i
 
 ## How to use this library?
 
-please visit this [docs](https://cocoth.github.io/HALO/){:target="_blank"}
+please visit this <a href="https://cocoth.github.io/HALO/" target="_blank">docs</a>
+
 
 ## Contribute
 
