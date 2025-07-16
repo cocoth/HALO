@@ -12,7 +12,7 @@
 ## Installation
 
 ```bash
-git clone https://github.com/cocoth/HALO.git
+npm i  git+https://github.com/cocoth/HALO.git
 cd HALO
 npm i 
 ```
