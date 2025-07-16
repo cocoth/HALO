@@ -19,6 +19,7 @@
     "javascript-obfuscator": "^4.1.1",
     "tsup": "^8.5.0",
     "tsx": "^4.20.3",
+    "typedoc": "^0.28.7",
     "typescript": "^5.8.3"
   },
   "dependencies": {

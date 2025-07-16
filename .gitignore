@@ -6,3 +6,4 @@ dist
 index.ts
 tsup.config.ts
 sessions
+typedoc.json
