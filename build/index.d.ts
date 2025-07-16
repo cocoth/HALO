@@ -60,7 +60,9 @@ type ModelID = GoogleGenerativeAIModelId | OpenAIResponsesModelId;
  *   apiKey: "your-api-key",
  *   model: "gpt-4o",
  *   fallbackModel: "gpt-3.5-turbo",
- *   systemPromptFile: "/path/to/system/prompt.txt",
+ *   systemPrompt: {
+ *      text: "You are a helpful assistant. Answer the questions as best you can.",
+ *   },
  *   tools: {
  *     getCurrentTime: TaskHandler.getCurrentTime
  *   }
@@ -71,7 +73,13 @@ type ModelID = GoogleGenerativeAIModelId | OpenAIResponsesModelId;
  * @property `model` - The model ID to use for the AI agent, which can be a Google Gemini model or an OpenAI model.
  * @property `fallbackModel` - The model ID that can be used as a fallback if the primary
  * model fails or is not available.
- * @property `systemPromptFile` - The file path to the system prompt. If not provided, the system prompt will be empty.
+ * @property `systemPrompt` - The system prompt text to be used by the AI agent.
+ * This can be a string or a file containing the prompt.
+ * You can use either `file` or `text`, but not both.
+ * @example
+ * const systemPrompt = {
+ *   text: "You are a helpful assistant. Answer the questions as best you can."
+ * }
  * @property `tools` - A set of tools that the AI agent can use to perform specific tasks.
  * These tools can be used to interact with external services or perform actions.
  */
@@ -98,10 +106,19 @@ interface AiAgentConfig<ExtraModelID extends string = ModelID> {
      */
     fallbackModel: ExtraModelID | ModelID;
     /**
-    * The file path to the system prompt.
-    * If not provided, the system prompt will be empty.
-    */
-    systemPromptFile?: string;
+     * The system prompt text to be used by the AI agent.
+     * This can be a string or a file containing the prompt.
+     * If not provided, the system prompt will be empty.
+     * You can use either `systemPromptFile` or `systemPrompt.text`, but not both.
+     * @example
+     * const systemPrompt = {
+     *   text: "You are a helpful assistant. Answer the questions as best you can."
+     * }
+     */
+    systemPrompt?: OnlyOne<{
+        file: string;
+        text: string;
+    }>;
     /**
      * A set of tools that the AI agent can use to perform specific tasks.
      * These tools can be used to interact with external services or perform actions.
@@ -162,6 +179,19 @@ interface SessionResult {
  * @template Keys - The keys of T that are required at least once.
  */
 type AtLeastOne<T, Keys extends keyof T = keyof T> = Keys extends keyof T ? Required<Pick<T, Keys>> & Partial<Omit<T, Keys>> : never;
+/** * OnlyOne is a utility type that ensures only one of the specified keys in T can be present at a time.
+ * It allows for defining types where only one property can be set, while the others must be `never`.
+ * @template T - The type to apply the OnlyOne constraint to.
+ * @template K - The keys of T that are mutually exclusive.
+ * @example
+ * type Example = OnlyOne<{ a: string; b: number; c: boolean }>
+ * // This will create a type where only one of 'a', 'b', or 'c' can be present at a time.
+ * */
+type OnlyOne<T> = {
+    [K in keyof T]: {
+        [P in K]: T[P];
+    } & Partial<Record<Exclude<keyof T, K>, never>>;
+}[keyof T];
 /** * Represents a message to be saved in the database.
  *   @property role - The role of the message sender (e.g., "user", "assistant").
  *   @property text - The content of the message.
@@ -270,22 +300,25 @@ interface InlineData {
 /**
  * AiAgent class for interacting with an AI agent via OpenAI API.
  * It initializes the agent with a URL and API key, and allows starting a chat session.
- * The system prompt can be loaded from a specified file.
- * @params {AiAgentConfig<ModelID>} config - Configuration for the AI agent.
+ * This class provides methods to start a chat session, generate text responses, and handle various tasks.
+ * @param {AiAgentConfig<ModelID>} config - Configuration for the AI agent.
  * @property {string} agentUrl - The URL of the AI agent service.
  * @property {string} apiKey - The API key for the AI agent.
  * @property {ModelID} model - The language model used for generating responses.
  * @property {ModelID} fallbackModel - Optional fallback model to use if the primary model fails.
- * @property {string} systemPromptFile - Optional file path for the system prompt.
+ * @property {string} systemPrompt - The system prompt text to be used by the AI agent.
+ * This can be a string or a file containing the prompt.
+ * You can use either `file` or `text`, but not both.
  * @property {ToolSet} toolSet - Set of tools available for the AI agent to use.
- * @description This class provides methods to start a chat session, generate text responses, and handle various tasks.
  * @example
  * const agent = new AiAgent({
  *   agentUrl: "https://api.example.com/ai",
  *   apiKey: "your-api-key",
  *   model: "gpt-4o",
  *   fallbackModel: "gpt-3.5-turbo",
- *   systemPromptFile: "/path/to/system/prompt.txt",
+ *   systemPrompt: {
+ *      text: "You are a helpful assistant. Answer the questions as best you can.",
+ *   },
  *   tools: {
  *     getCurrentTime: TaskHandler.getCurrentTime
  *   }
@@ -297,15 +330,42 @@ declare class AiAgent {
     private model;
     private fallbackModel?;
     private systemPromptFile?;
+    private systemPromptText?;
     private streamMethod;
     private toolSet;
-    constructor(config: AiAgentConfig);
-    private init;
+    private systemPromptCache?;
     /**
      * Loads the system prompt from a specified file.
      * If the file is not found or empty, it throws an error.
      */
     private systemPrompt;
+    constructor(config: AiAgentConfig);
+    /**
+     * Validates the configuration for the AI agent.
+     * @param config - The configuration to validate.
+     * @throws Will throw an error if the configuration is invalid.
+     */
+    private validateConfig;
+    /**
+     * Validates the query parameters for the AI agent.
+     * @param session - Optional array of previous messages in the chat session.
+     * @param prompt - The user's message to start the chat.
+     * @throws Will throw an error if the prompt is not a string or if the session is not an array of CoreMessage.
+     */
+    private validateQueryParams;
+    /**
+     * Initializes the AI agent with the provided configuration.
+     * It sets up the agent URL, API key, model, and system prompt.
+     * @param config - The configuration for the AI agent.
+     */
+    private initializeProperties;
+    /**
+     * Sets up the tools for the AI agent.
+     * If tools are provided, they are merged with the default tool set.
+     * @param tools - Optional set of tools to be used by the AI agent.
+     */
+    private setupTools;
+    private initModel;
     /**
      * Generates an object based on either a prompt string or an array of messages, validated against a provided schema.
      *
@@ -342,9 +402,34 @@ declare class AiAgent {
      * @param session - An optional array of previous messages in the chat session.
      * @param prompt - The user's message to start the chat.
      * @param media - Optional media data to include in the chat.
+     * @example
+     * const { user, session, saveHistory } = await chatSession.useJSONFileSession({
+     *   folderName: "sessions",
+     *   sessionFileNameSuffix: username,
+     *   user: {
+     *     username: username,
+     *     phone: phone,
+     *   },
+     * })
+     * const chatBuilder = await agent.query({
+     *   session: session,
+     *   prompt: "Hi there!",
+     *   media: null
+     * });
+     * const textResponse = await chatBuilder.generateText();
+     * const streamResponse = await chatBuilder.generateStream();
+     * const objectResponse = await chatBuilder.generateObject(
+     *   z.object({
+     *     answer: z.string()
+     *   })
+     * );
+     * console.log(textResponse.text);
+     * console.log(streamResponse.textStream);
+     * console.log(objectResponse.object);
      * @returns A ChatBuilder object with methods to generate text or stream responses.
+     * @throws Will throw an error if the prompt is not a string or if the session is not an array of CoreMessage.
      */
-    query({ session, prompt, media, }: {
+    query(params: {
         /**
          * An optional array of previous messages in the chat session.
          * This allows the AI agent to continue the conversation with the existing context.
@@ -379,7 +464,7 @@ declare class AiAgent {
      * @returns A promise that resolves to the AI's response, which can be either a text response or a stream of text responses.
      * @throws Will throw an error if the prompt is not a string or if the session is invalid.
      */
-    startChat({ streamMethod, session, prompt, media, }: {
+    startChat(params: {
         /**
        * The method to use for streaming responses.
        * Can be "stream" for streaming responses or "text" for text responses.
@@ -424,6 +509,25 @@ declare class AiAgent {
      * @returns A promise that resolves to the AI's response, which can be either a text response or a stream of text responses.
      */
     private getResponse;
+    /**
+     * Generates text with a retry mechanism using a fallback model if the primary model fails.
+     * This method will attempt to generate text and, if it encounters an error related to rate limits or quota,
+     * it will switch to the fallback model and retry the generation.
+     *
+     * @param messages - An array of CoreMessage objects representing the conversation history.
+     * @param retryCount - The current retry count, defaults to 0.
+     * @returns A promise that resolves to the generated text or throws an error if all retries fail.
+     */
+    private generateTextWithRetry;
+    /**
+     * Determines whether to retry with a fallback model based on the error and retry count.
+     * If the error is related to rate limits or quota issues, it will retry with the fallback model.
+     *
+     * @param error - The error encountered during the request.
+     * @param retryCount - The current retry count.
+     * @returns A boolean indicating whether to retry with the fallback model.
+     */
+    private shouldRetryWithFallback;
 }
 
 declare const TaskHandler: {
@@ -462,11 +566,13 @@ declare class IOF {
     static rm(dirPath: string): void;
     /**
      * Watches a directory for file system events and executes a callback with the event details.
-     * @param dirPath - The path of the directory to watch.
-     * @param event - The type of event to listen for (e.g., "add", "change", "unlink").
-     * @param params - Optional callback function to execute with the file path and event type.
+     * @param options - The options for the watcher.
+     * @param options.dirPath - The path of the directory to watch.
+     * @param options.event - The type of event to listen for (e.g., "add", "change", "unlink").
+     * @param options.onEvent - Optional callback function to handle file system events.
+     *
      */
-    static watcher({ dirPath, event, params, }: {
+    static watcher(options: {
         /**
          * The path of the directory to watch.
          */
@@ -476,9 +582,9 @@ declare class IOF {
          */
         event: keyof FSWatcherKnownEventMap | "add" | "change" | "addDir" | "unlink" | "unlinkDir";
         /**
-         * Optional callback function to execute with the file path and event type.
+         * Optional callback function to handle file system events.
          */
-        params?: ({ filePath, event }: {
+        onEvent?: (args: {
             /**
              * The full path of the file that triggered the event.
              */
@@ -509,7 +615,7 @@ declare class IOF {
      * @param data - The object to write to the file.
      * @throws An error if the file cannot be written or if the content is not an array.
      */
-    static writeJSONFile<T>({ filePath, data }: {
+    static writeJSONFile<T>(params: {
         filePath: string;
         data: T;
     }): Promise<void>;
@@ -519,7 +625,7 @@ declare class IOF {
      * @param data - The array of objects to write to the file.
      * @throws An error if the file cannot be written or if the content is not an array.
      */
-    static writeJSONFileOverwrite<T>({ filePath, data }: {
+    static writeJSONFileOverwrite<T>(params: {
         filePath: string;
         data: T[];
     }): Promise<void>;
@@ -584,7 +690,6 @@ declare class IOF {
  * Utility functions for terminal colors.
  * These functions provide ANSI escape codes for styling terminal output.
  * @module terminalColors
- * @description
  * This module exports an object containing ANSI escape codes for various text styles and colors.
  * You can use these codes to format terminal output in Node.js applications.
  * @example
@@ -657,6 +762,7 @@ declare function ClearTerminal(): Promise<void>;
  */
 declare function Sleep(duration: number): Promise<void>;
 /**
+ * This function filters environment variables that start with the specified prefix,
  * Parses environment variables that start with a given prefix.
  * @param prefix The prefix to filter environment variables.
  * @returns An object containing arrays of keys and values.
@@ -664,7 +770,6 @@ declare function Sleep(duration: number): Promise<void>;
  * const envVars = ParseEnvKeys("AI_TOKEN_");
  * console.log(envVars.keys); // ['AI_TOKEN_KEY']
  * console.log(envVars.values); // ['your_token_value']
- * @description This function filters environment variables that start with the specified prefix,
  */
 declare function ParseEnvKeys(prefix: string): {
     keys: string[];
@@ -680,43 +785,67 @@ declare namespace terminal {
   export { terminal_ClearTerminal as ClearTerminal, terminal_CloseTerminal as CloseTerminal, terminal_ParseEnvKeys as ParseEnvKeys, terminal_Question as Question, terminal_Sleep as Sleep };
 }
 
+/**
+ * Time utility class for handling date and time formatting.
+ * This class provides methods to format dates in various ways, including human-readable formats,
+ * ISO strings, and formats suitable for logging or saving to a database.
+ */
 declare class Time {
     private static formatDateToParts;
     private static formatDateString;
     private static formateDateToSaveString;
     private static logFormat;
     /**
+     * Gets the system's default timezone
+     */
+    static getSystemTimezone(): string;
+    /**
+     * Gets the system's default locale
+     */
+    static getSystemLocale(): string;
+    /**
+     * Gets both system locale and timezone
+     */
+    static getSystemLocaleAndTimezone(): {
+        locale: string;
+        timeZone: string;
+    };
+    /**
      * Formats a date to a human-readable string.
      * @param date The date to format.
      * @param timeZone The time zone to use for formatting.
      * @returns The formatted date string.
      */
-    static formatDateToHumanReadable(date: Date, timeZone: string): string;
+    static formatDateToHumanReadable(data: {
+        date?: Date;
+        locale?: string | null;
+        timeZone?: string | null;
+    }): string;
     /**
      * Returns the current time formatted as a string suitable for saving.
      * This format is `YYYY-MM-DDTHH-MM-SSZ`, which is useful for file naming or database storage.
      */
-    static getCurrentTimeToSaveString(): string;
+    static getCurrentTimeToSaveString(locale?: string | null, timeZone?: string | null): string;
     /**
      * Returns the current time as a Date object.
      * This method formats the current time to a string and then converts it back to a Date object.
      */
-    static getCurrentTime(): Date;
+    static getCurrentTime(locale?: string | null, timeZone?: string | null): Date;
     /**
      * Returns the current time formatted as a string.
      * This format is `YYYY-MM-DDTHH:MM:SSZ`, which is useful for logging or displaying the current time.
      */
-    static getCurrentTimeToString(): string;
+    static getCurrentTimeToString(locale?: string | null, timeZone?: string | null): string;
     /**
      * Returns the current time in a human-readable format.
      * This format is `DD/MM/YYYY HH:MM:SS`, which is suitable for display to users.
      */
-    static getCurrentTimeToHumanReadable(): string;
+    static getCurrentTimeToHumanReadable(locale?: string | null, timeZone?: string | null): string;
     /**
      * Returns the current time formatted for logging.
      * This format is `DD/MM/YYYY:HH:MM:SS`, which is useful for log entries.
      */
-    static getTimeToLogFormat(): string;
+    static getTimeToLogFormat(locale?: string | null, timeZone?: string | null): string;
 }
 
 interface SessionConfig {
@@ -724,16 +853,16 @@ interface SessionConfig {
      * The platform for the session, e.g., "web", "mobile", etc.
      */
     platform: string;
-    /**
-     * The folder name where session files are stored.
-     * Default is "sessions".
-     */
-    folderName?: string;
 }
 /**
  * Represents a session for an AI agent.
  * This class is used to manage the session configuration and operations.
  * It can be extended to implement specific session functionalities.
+ * @example
+ * const session = new AgentSession({
+ *   platform: "web",
+ * });
+ *
  */
 declare class AgentSession {
     private platform;
@@ -757,6 +886,22 @@ declare class AgentSession {
      * Starts a new session for the user using in-memory storage.
      * This method is useful for quick sessions that do not require persistent storage.
      * @param user - The user for whom the session is being started.
+     * @example
+     * const agentSession = new AgentSession({
+     *   platform: "test",
+     * });
+     * const { user, session, saveHistory } = await agentSession.useMemorySession({
+     *   user: {
+     *     username: "testuser",
+     *     email: "testuser@example.com"
+     *   }
+     * });
+     * const userMessage = await Question("[You]");
+     * await saveHistory<string>({
+     *   role: "user",
+     *   text: userMessage,
+     *   timestamp: Time.getCurrentTime(),
+     * });
      * @returns An object containing the user and the session history.
      */
     useMemorySession({ user, }: {
@@ -772,9 +917,35 @@ declare class AgentSession {
      * If it exists, it resumes the session from the file.
      * @param user - The user for whom the session is being started.
      * @param folderName - The name of the folder where session files are stored.
+     * @param sessionFileNameSuffix - The name of the session file. If not provided, it defaults to a combination of the sessionFilePrefix and the user's username, email, phone, or name.
      * @returns An object containing the user and the session history.
+     * @throws An error if the user is not provided or if the session file cannot be created or resumed.
+     * @example
+     * const agentSession = new AgentSession({
+     *   platform: "test",
+     * });
+     * const { user, session, saveHistory } = await agentSession.useJSONFileSession({
+     *   folderName: "sessions",
+     *   sessionFileNameSuffix: "testuser",
+     *   user: {
+     *     username: "testuser",
+     *     email: "testuser@example.com"
+     *   }
+     * });
+     *
+     * const userMessage = await Question("[You]");
+     * await saveHistory<string>({
+     *   role: "user",
+     *   text: userMessage,
+     *   timestamp: Time.getCurrentTime(),
+     * });
      */
-    useJSONFileSession({ user, sessionFileName }: {
+    useJSONFileSession(params: {
+        /**
+         * The name of the folder where session files are stored.
+         * This is required to create or resume a session.
+         */
+        folderName: string;
         /**
          * The user for whom the session is being started.
          * This is required to create or resume a session.
@@ -783,7 +954,7 @@ declare class AgentSession {
         /**
          * The name of the session file. If not provided, it defaults to a combination of the sessionFilePrefix and the user's username, email, phone, or name.
          */
-        sessionFileName?: string;
+        sessionFileNameSuffix?: string;
     }): Promise<SessionResult>;
     /**
      * Saves the conversation history to a JSON file.
@@ -830,4 +1001,4 @@ declare class AgentSession {
     private resumeJSONFileSession;
 }
 
-export { AgentSession, AiAgent, type AiAgentConfig, type AtLeastOne, type ChatBuilder, type ConversationDB, type FileDownloadInterface, type FileInterface, type FileStorageInterface, GenerateRandomString, GenerateUUID, HashWithSHA256, IOF, type InlineData, Logger, type LooseToStrict, type ModelID, type SessionResult, type StartChatResult, TaskHandler, terminal as Terminal, Time, Tools, type UserBase, mimeType, terminalColors };
+export { AgentSession, AiAgent, type AiAgentConfig, type AtLeastOne, type ChatBuilder, type ConversationDB, type FileDownloadInterface, type FileInterface, type FileStorageInterface, GenerateRandomString, GenerateUUID, HashWithSHA256, IOF, type InlineData, Logger, type LooseToStrict, type ModelID, type OnlyOne, type SessionResult, type StartChatResult, TaskHandler, terminal as Terminal, Time, Tools, type UserBase, mimeType, terminalColors };

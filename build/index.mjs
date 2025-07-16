@@ -33,9 +33,11 @@ var terminalColors = {
 
 // src/utils/time.ts
 var Time = class _Time {
-  static formatDateToParts(date, timeZone) {
-    const formatter = new Intl.DateTimeFormat("id-ID", {
-      timeZone,
+  static formatDateToParts(date, locale, timeZone) {
+    const systemLocale = locale || _Time.getSystemLocale();
+    const systemTimeZone = timeZone || _Time.getSystemTimezone();
+    const formatter = new Intl.DateTimeFormat(systemLocale, {
+      timeZone: systemTimeZone,
       year: "numeric",
       month: "2-digit",
       day: "2-digit",
@@ -61,31 +63,55 @@ var Time = class _Time {
     return `${dateParts.day}/${dateParts.month}/${dateParts.year}:${dateParts.hour}:${dateParts.minute}:${dateParts.second}`;
   }
   /**
+   * Gets the system's default timezone
+   */
+  static getSystemTimezone() {
+    return Intl.DateTimeFormat().resolvedOptions().timeZone;
+  }
+  /**
+   * Gets the system's default locale
+   */
+  static getSystemLocale() {
+    return Intl.DateTimeFormat().resolvedOptions().locale;
+  }
+  /**
+   * Gets both system locale and timezone
+   */
+  static getSystemLocaleAndTimezone() {
+    const resolved = Intl.DateTimeFormat().resolvedOptions();
+    return {
+      locale: resolved.locale,
+      timeZone: resolved.timeZone
+    };
+  }
+  /**
    * Formats a date to a human-readable string.
    * @param date The date to format.
    * @param timeZone The time zone to use for formatting.
    * @returns The formatted date string.
    */
-  static formatDateToHumanReadable(date, timeZone) {
-    const dateParts = _Time.formatDateToParts(date, timeZone);
+  static formatDateToHumanReadable(data) {
+    const { date, locale, timeZone } = data;
+    const now = /* @__PURE__ */ new Date();
+    const dateParts = _Time.formatDateToParts(date || now, locale, timeZone);
     return `${dateParts.day}/${dateParts.month}/${dateParts.year} ${dateParts.hour}:${dateParts.minute}:${dateParts.second}`;
   }
   /**
    * Returns the current time formatted as a string suitable for saving.
    * This format is `YYYY-MM-DDTHH-MM-SSZ`, which is useful for file naming or database storage.
    */
-  static getCurrentTimeToSaveString() {
+  static getCurrentTimeToSaveString(locale, timeZone) {
     const now = /* @__PURE__ */ new Date();
-    const dateParts = _Time.formatDateToParts(now, "Asia/Jakarta");
+    const dateParts = _Time.formatDateToParts(now, locale, timeZone);
     return _Time.formateDateToSaveString(dateParts);
   }
   /**
    * Returns the current time as a Date object.
    * This method formats the current time to a string and then converts it back to a Date object.
    */
-  static getCurrentTime() {
+  static getCurrentTime(locale, timeZone) {
     const now = /* @__PURE__ */ new Date();
-    const dateParts = _Time.formatDateToParts(now, "Asia/Jakarta");
+    const dateParts = _Time.formatDateToParts(now, locale, timeZone);
     const formattedDateString = _Time.formatDateString(dateParts);
     return new Date(formattedDateString);
   }
@@ -93,26 +119,26 @@ var Time = class _Time {
    * Returns the current time formatted as a string.
    * This format is `YYYY-MM-DDTHH:MM:SSZ`, which is useful for logging or displaying the current time.
    */
-  static getCurrentTimeToString() {
+  static getCurrentTimeToString(locale, timeZone) {
     const now = /* @__PURE__ */ new Date();
-    const dateParts = _Time.formatDateToParts(now, "Asia/Jakarta");
+    const dateParts = _Time.formatDateToParts(now, locale, timeZone);
     return _Time.formatDateString(dateParts);
   }
   /**
    * Returns the current time in a human-readable format.
    * This format is `DD/MM/YYYY HH:MM:SS`, which is suitable for display to users.
    */
-  static getCurrentTimeToHumanReadable() {
+  static getCurrentTimeToHumanReadable(locale, timeZone) {
     const now = /* @__PURE__ */ new Date();
-    return _Time.formatDateToHumanReadable(now, "Asia/Jakarta");
+    return _Time.formatDateToHumanReadable({ date: now, locale, timeZone });
   }
   /**
    * Returns the current time formatted for logging.
    * This format is `DD/MM/YYYY:HH:MM:SS`, which is useful for log entries.
    */
-  static getTimeToLogFormat() {
+  static getTimeToLogFormat(locale, timeZone) {
     const now = /* @__PURE__ */ new Date();
-    const dateParts = _Time.formatDateToParts(now, "Asia/Jakarta");
+    const dateParts = _Time.formatDateToParts(now, locale, timeZone);
     return _Time.logFormat(dateParts);
   }
 };
@@ -336,20 +362,19 @@ var IOF = class _IOF {
   }
   /**
    * Watches a directory for file system events and executes a callback with the event details.
-   * @param dirPath - The path of the directory to watch.
-   * @param event - The type of event to listen for (e.g., "add", "change", "unlink").
-   * @param params - Optional callback function to execute with the file path and event type.
+   * @param options - The options for the watcher.
+   * @param options.dirPath - The path of the directory to watch.
+   * @param options.event - The type of event to listen for (e.g., "add", "change", "unlink").
+   * @param options.onEvent - Optional callback function to handle file system events.
+   * 
    */
-  static watcher({
-    dirPath,
-    event,
-    params
-  }) {
+  static watcher(options) {
+    const { dirPath, event, onEvent } = options;
     const fullPath = path.resolve(process.cwd(), dirPath);
     const watcher = chokidar.watch(fullPath, { persistent: true });
     watcher.on(event, async (filePath) => {
-      if (params) {
-        await params({
+      if (onEvent) {
+        await onEvent({
           filePath: path.resolve(process.cwd(), filePath),
           event
         });
@@ -391,7 +416,8 @@ var IOF = class _IOF {
    * @param data - The object to write to the file.
    * @throws An error if the file cannot be written or if the content is not an array.
    */
-  static async writeJSONFile({ filePath, data }) {
+  static async writeJSONFile(params) {
+    const { filePath, data } = params;
     try {
       if (!_IOF.existsFileSync(path.dirname(filePath))) {
         _IOF.mkdir(path.dirname(filePath));
@@ -415,7 +441,8 @@ var IOF = class _IOF {
    * @param data - The array of objects to write to the file.
    * @throws An error if the file cannot be written or if the content is not an array.
    */
-  static async writeJSONFileOverwrite({ filePath, data }) {
+  static async writeJSONFileOverwrite(params) {
+    const { filePath, data } = params;
     try {
       if (!fs.existsSync(path.dirname(filePath))) {
         _IOF.mkdir(path.dirname(filePath));
@@ -597,35 +624,108 @@ var AiAgent = class {
   model;
   fallbackModel;
   systemPromptFile;
+  systemPromptText;
   streamMethod = "text";
   toolSet = {
     getCurrentTime: TaskHandler.getCurrentTime
   };
+  systemPromptCache;
+  /**
+   * Loads the system prompt from a specified file.
+   * If the file is not found or empty, it throws an error.
+   */
+  async systemPrompt() {
+    if (this.systemPromptCache !== void 0) {
+      return this.systemPromptCache;
+    }
+    if (this.systemPromptText) {
+      this.systemPromptCache = this.systemPromptText;
+      return this.systemPromptCache;
+    }
+    if (this.systemPromptFile) {
+      try {
+        const system = await IOF.readTextFile(this.systemPromptFile);
+        if (!system) {
+          throw new Error("System prompt file not found or empty.");
+        }
+        this.systemPromptCache = system;
+        return this.systemPromptCache;
+      } catch (error) {
+        throw new Error(`Failed to load system prompt: ${error instanceof Error ? error.message : String(error)}`);
+      }
+    }
+    this.systemPromptCache = "";
+    return this.systemPromptCache;
+  }
   constructor(config) {
     try {
+      this.validateConfig(config);
       this.aiAgentUrl = config.agentUrl;
       this.apiKey = config.apiKey;
-      this.systemPromptFile = config.systemPromptFile;
-      if (!this.aiAgentUrl || !this.apiKey) {
-        throw new Error("Agent URL and API key are required.");
-      }
-      this.model = this.init({
+      this.initializeProperties(config);
+      this.setupTools(config.tools);
+      this.model = this.initModel({
         model: config.model
       });
-      if (config.fallbackModel) {
-        this.fallbackModel = config.fallbackModel;
-      }
-      if (config.tools) {
-        this.toolSet = {
-          getCurrentTime: TaskHandler.getCurrentTime,
-          ...config.tools
-        };
-      }
+      this.fallbackModel = config.fallbackModel;
     } catch (error) {
       throw new Error(`Invalid configuration: ${error}`);
     }
   }
-  init({
+  /**
+   * Validates the configuration for the AI agent.
+   * @param config - The configuration to validate.
+   * @throws Will throw an error if the configuration is invalid.
+   */
+  validateConfig(config) {
+    const errors = [];
+    if (!config.agentUrl) errors.push("Agent URL is required");
+    if (!config.apiKey) errors.push("API key is required");
+    if (!config.model) errors.push("Model is required");
+    if (config.systemPrompt?.text && config.systemPrompt?.file) {
+      errors.push("Cannot use both systemPrompt.text and systemPrompt.file");
+    }
+    if (errors.length > 0) {
+      throw new Error(`Configuration errors: ${errors.join(", ")}`);
+    }
+  }
+  /**
+   * Validates the query parameters for the AI agent.
+   * @param session - Optional array of previous messages in the chat session.
+   * @param prompt - The user's message to start the chat.
+   * @throws Will throw an error if the prompt is not a string or if the session is not an array of CoreMessage.
+   */
+  validateQueryParams({ session, prompt }) {
+    if (prompt && typeof prompt !== "string") {
+      throw new Error("Prompt must be a non-empty string.");
+    }
+    if (session && !Array.isArray(session)) {
+      throw new Error("Session must be an array of CoreMessage.");
+    }
+  }
+  /**
+   * Initializes the AI agent with the provided configuration.
+   * It sets up the agent URL, API key, model, and system prompt.
+   * @param config - The configuration for the AI agent.
+   */
+  initializeProperties(config) {
+    this.systemPromptFile = config.systemPrompt?.file;
+    this.systemPromptText = config.systemPrompt?.text;
+  }
+  /**
+   * Sets up the tools for the AI agent.
+   * If tools are provided, they are merged with the default tool set.
+   * @param tools - Optional set of tools to be used by the AI agent.
+   */
+  setupTools(tools) {
+    if (tools) {
+      this.toolSet = {
+        getCurrentTime: TaskHandler.getCurrentTime,
+        ...tools
+      };
+    }
+  }
+  initModel({
     model
   }) {
     if (model?.startsWith("gemini-")) {
@@ -652,20 +752,6 @@ var AiAgent = class {
     return openAIModel("gpt-4o");
   }
   /**
-   * Loads the system prompt from a specified file.
-   * If the file is not found or empty, it throws an error.
-   */
-  async systemPrompt() {
-    if (!this.systemPromptFile) {
-      return "";
-    }
-    const system = await IOF.readTextFile(this.systemPromptFile);
-    if (!system) {
-      throw new Error("System prompt file not found or empty.");
-    }
-    return system;
-  }
-  /**
    * Generates an object based on either a prompt string or an array of messages, validated against a provided schema.
    *
    * @param messages - Optional array of `CoreMessage` objects to use as context for generation.
@@ -676,23 +762,8 @@ var AiAgent = class {
    */
   async generateObject({
     messages,
-    prompt,
     schema
   }) {
-    if (prompt && typeof prompt !== "string") {
-      throw new Error("Prompt must be a string.");
-    }
-    if (messages && !Array.isArray(messages)) {
-      throw new Error("Messages must be an array of CoreMessage.");
-    }
-    if (prompt) {
-      return await generateObject({
-        model: this.model,
-        system: await this.systemPrompt(),
-        schema,
-        prompt
-      });
-    }
     return await generateObject({
       model: this.model,
       system: await this.systemPrompt(),
@@ -710,24 +781,8 @@ var AiAgent = class {
    * @returns A stream of text responses generated by the AI agent.
    */
   async generateText({
-    messages,
-    prompt
+    messages
   }) {
-    if (prompt && typeof prompt !== "string") {
-      throw new Error("Prompt must be a string.");
-    }
-    if (messages && !Array.isArray(messages)) {
-      throw new Error("Messages must be an array of CoreMessage.");
-    }
-    if (prompt) {
-      return await generateText({
-        model: this.model,
-        system: await this.systemPrompt(),
-        tools: Object.keys(this.toolSet).length > 0 ? this.toolSet : void 0,
-        maxSteps: Object.keys(this.toolSet).length > 0 ? Number.MAX_SAFE_INTEGER : void 0,
-        prompt
-      });
-    }
     return await generateText({
       model: this.model,
       system: await this.systemPrompt(),
@@ -745,24 +800,8 @@ var AiAgent = class {
    * @returns A stream of text responses from the AI agent.
    */
   async generateStream({
-    messages,
-    prompt
+    messages
   }) {
-    if (prompt && typeof prompt !== "string") {
-      throw new Error("Prompt must be a string.");
-    }
-    if (messages && !Array.isArray(messages)) {
-      throw new Error("Messages must be an array of CoreMessage.");
-    }
-    if (prompt) {
-      return streamText({
-        model: this.model,
-        system: await this.systemPrompt(),
-        tools: Object.keys(this.toolSet).length > 0 ? this.toolSet : void 0,
-        maxSteps: Object.keys(this.toolSet).length > 0 ? Number.MAX_SAFE_INTEGER : void 0,
-        prompt
-      });
-    }
     return streamText({
       model: this.model,
       system: await this.systemPrompt(),
@@ -778,13 +817,35 @@ var AiAgent = class {
    * @param session - An optional array of previous messages in the chat session.
    * @param prompt - The user's message to start the chat.
    * @param media - Optional media data to include in the chat.
+   * @example
+   * const { user, session, saveHistory } = await chatSession.useJSONFileSession({
+   *   folderName: "sessions",
+   *   sessionFileNameSuffix: username,
+   *   user: {
+   *     username: username,
+   *     phone: phone,
+   *   },
+   * })
+   * const chatBuilder = await agent.query({
+   *   session: session,
+   *   prompt: "Hi there!",
+   *   media: null
+   * });
+   * const textResponse = await chatBuilder.generateText();
+   * const streamResponse = await chatBuilder.generateStream();
+   * const objectResponse = await chatBuilder.generateObject(
+   *   z.object({
+   *     answer: z.string()
+   *   })
+   * );
+   * console.log(textResponse.text);
+   * console.log(streamResponse.textStream);
+   * console.log(objectResponse.object);
    * @returns A ChatBuilder object with methods to generate text or stream responses.
+   * @throws Will throw an error if the prompt is not a string or if the session is not an array of CoreMessage.
    */
-  async query({
-    session,
-    prompt,
-    media
-  }) {
+  async query(params) {
+    const { session, prompt, media } = params;
     try {
       if (!prompt || typeof prompt !== "string") {
         throw new Error("Prompt must be a non-empty string.");
@@ -807,7 +868,7 @@ var AiAgent = class {
     } catch (error) {
       if (error instanceof Error && error.message.includes("Rate limit")) {
         Logger.warn("Rate limit exceeded, switching model...");
-        this.model = this.init({
+        this.model = this.initModel({
           model: this.fallbackModel
         });
         return await this.query({ session, prompt });
@@ -833,12 +894,8 @@ var AiAgent = class {
    * @returns A promise that resolves to the AI's response, which can be either a text response or a stream of text responses.
    * @throws Will throw an error if the prompt is not a string or if the session is invalid.
    */
-  async startChat({
-    streamMethod = "text",
-    session,
-    prompt,
-    media
-  }) {
+  async startChat(params) {
+    const { streamMethod = "text", session, prompt, media } = params;
     try {
       if (!prompt || typeof prompt !== "string") {
         throw new Error("Prompt must be a non-empty string.");
@@ -852,7 +909,7 @@ var AiAgent = class {
     } catch (error) {
       if (error instanceof Error && error.message.includes("Rate limit")) {
         Logger.warn("Rate limit exceeded, switching model...");
-        this.model = this.init({
+        this.model = this.initModel({
           model: this.fallbackModel
         });
         return await this.startChat({ session, prompt });
@@ -875,6 +932,7 @@ var AiAgent = class {
     prompt,
     media
   }) {
+    this.validateQueryParams({ session, prompt });
     const baseMessages = session && session.length > 0 ? [...session] : [];
     const userMessage = !media || media.inlineData === "" ? {
       role: "user",
@@ -909,6 +967,39 @@ var AiAgent = class {
     }
     const { text, response } = await this.generateText({ messages });
     return { text, response };
+  }
+  /**
+   * Generates text with a retry mechanism using a fallback model if the primary model fails.
+   * This method will attempt to generate text and, if it encounters an error related to rate limits or quota,
+   * it will switch to the fallback model and retry the generation.
+   *
+   * @param messages - An array of CoreMessage objects representing the conversation history.
+   * @param retryCount - The current retry count, defaults to 0.
+   * @returns A promise that resolves to the generated text or throws an error if all retries fail.
+   */
+  async generateTextWithRetry({ messages }, retryCount = 0) {
+    try {
+      return await this.generateText({ messages });
+    } catch (error) {
+      if (this.shouldRetryWithFallback(error, retryCount)) {
+        Logger.warn("Switching to fallback model...");
+        this.model = this.initModel({ model: this.fallbackModel });
+        return await this.generateTextWithRetry({ messages }, retryCount + 1);
+      }
+      throw error;
+    }
+  }
+  /**
+   * Determines whether to retry with a fallback model based on the error and retry count.
+   * If the error is related to rate limits or quota issues, it will retry with the fallback model.
+   *
+   * @param error - The error encountered during the request.
+   * @param retryCount - The current retry count.
+   * @returns A boolean indicating whether to retry with the fallback model.
+   */
+  shouldRetryWithFallback(error, retryCount) {
+    const MAX_RETRY = 1;
+    return retryCount < MAX_RETRY && !!this.fallbackModel && error instanceof Error && (error.message.includes("Rate limit") || error.message.includes("quota"));
   }
 };
 
@@ -990,7 +1081,6 @@ var AgentSession = class {
    */
   constructor(config) {
     this.platform = config.platform;
-    this.folderName = config.folderName || this.folderName;
     this.initPlatform().catch((error) => {
       throw new Error(error);
     });
@@ -1019,6 +1109,22 @@ var AgentSession = class {
    * Starts a new session for the user using in-memory storage.
    * This method is useful for quick sessions that do not require persistent storage.
    * @param user - The user for whom the session is being started.
+   * @example
+   * const agentSession = new AgentSession({
+   *   platform: "test",
+   * });
+   * const { user, session, saveHistory } = await agentSession.useMemorySession({
+   *   user: {
+   *     username: "testuser",
+   *     email: "testuser@example.com"
+   *   }
+   * });
+   * const userMessage = await Question("[You]");
+   * await saveHistory<string>({
+   *   role: "user",
+   *   text: userMessage,
+   *   timestamp: Time.getCurrentTime(),
+   * });
    * @returns An object containing the user and the session history.
    */
   async useMemorySession({
@@ -1068,22 +1174,42 @@ var AgentSession = class {
    * If it exists, it resumes the session from the file.
    * @param user - The user for whom the session is being started.
    * @param folderName - The name of the folder where session files are stored.
+   * @param sessionFileNameSuffix - The name of the session file. If not provided, it defaults to a combination of the sessionFilePrefix and the user's username, email, phone, or name.
    * @returns An object containing the user and the session history.
+   * @throws An error if the user is not provided or if the session file cannot be created or resumed.
+   * @example
+   * const agentSession = new AgentSession({
+   *   platform: "test",
+   * });
+   * const { user, session, saveHistory } = await agentSession.useJSONFileSession({
+   *   folderName: "sessions",
+   *   sessionFileNameSuffix: "testuser",
+   *   user: {
+   *     username: "testuser",
+   *     email: "testuser@example.com"
+   *   }
+   * });
+   *
+   * const userMessage = await Question("[You]");
+   * await saveHistory<string>({
+   *   role: "user",
+   *   text: userMessage,
+   *   timestamp: Time.getCurrentTime(),
+   * });
    */
-  async useJSONFileSession({
-    user,
-    sessionFileName
-  }) {
+  async useJSONFileSession(params) {
+    const { folderName, user, sessionFileNameSuffix } = params;
     if (!user) {
       throw new Error("User is required to start a session.");
     }
-    if (!sessionFileName) {
+    if (!sessionFileNameSuffix) {
       this.sessionFileName = `./${this.folderName}/${this.sessionFilePrefix}${user.username || user.email || user.phone || user.name}.json`;
-    } else if (sessionFileName.includes("/")) {
-      this.sessionFileName = sessionFileName;
+    } else if (sessionFileNameSuffix.includes("/")) {
+      this.sessionFileName = sessionFileNameSuffix;
     } else {
-      this.sessionFileName = `./${this.folderName}/${this.sessionFilePrefix}${sessionFileName}.json`;
+      this.sessionFileName = `./${this.folderName}/${this.sessionFilePrefix}${sessionFileNameSuffix}.json`;
     }
+    this.folderName = folderName || this.folderName;
     this.userBase = user;
     IOF.mkdir(`./${this.folderName}`);
     const session = await this.resumeJSONFileSession({
