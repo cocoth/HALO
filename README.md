@@ -61,7 +61,7 @@ const chatSession = new AgentSession({
 async function main() {
   Logger.info("Welcome to HALO Test Chat");
 // I Already make Question for input in terminal, it's kinda like input() in python
-  const phone = await Question("Your phone");
+  const phone = await Terminal.Question("Your phone");
 
   let username: string = "";
 
@@ -71,10 +71,10 @@ async function main() {
     phone: phone,
   })
   if (!userexist || !userexist.username) {
-    username = await Question("Yourname");
+    username = await Terminal.Question("Yourname");
     while (!username) {
       Logger.warn("Username tidak boleh kosong. Silakan isi lagi.");
-      username = await Question("Yourname");
+      username = await Terminal.Question("Yourname");
     }
   } else {
     username = userexist.username;
@@ -94,7 +94,7 @@ async function main() {
       },
     })
 
-    const q = await Question("[You]");
+    const q = await Terminal.Question("[You]");
 
 // Here we use saveHistory function to save our context to JSON database
     await saveHistory<string>({
