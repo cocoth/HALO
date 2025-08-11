@@ -11,8 +11,27 @@
 
 ## Installation
 
+Create dir
 ```bash
-npm i  git+https://github.com/cocoth/HALO.git
+mkdir my-project
+cd my-project
+```
+Initialize nodeJs & typescript project
+
+```bash
+npm init -y
+npm i -D typescript @types/node
+npm i -g tsx
+npx tsc --init
+```
+install zod for schema (optional, but in this case if you follow quick example you will need zod)
+```bash
+npm i  zod
+```
+Install this library
+
+```bash
+npm i  github:cocoth/HALO
 ```
 
 ## How to use this library?
@@ -26,6 +45,7 @@ import {
     AiAgentConfig, 
     Time 
 } form "halo";
+import { z } from "zod";
 
 // Here we use ParseEnvKeys instead of calling dotenv config,
 // because by default ParseEnvKeys already handle it 
