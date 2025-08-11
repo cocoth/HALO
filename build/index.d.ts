@@ -837,13 +837,15 @@ declare class Logger {
     static info(message: string, funcName?: string): void;
     static debug(message: string, funcName?: string): void;
     /**
-     * Custom logging function that allows specifying the type, message, color, and function name.
-     * @param type The type of log (e.g., "DEBUG", "WARN", "ERROR", "INFO", "SUCCESS").
-     * @param message The message to log.
-     * @param color Optional color for the log.
-     * @param funcName Optional function name for context.
+     * Custom log method that allows specifying a type and color.
+     * @param opt - Options for the custom log.
+     * @param message - The message to log.
+     * @param funcName - Optional function name for context.
      */
-    static custom(type: string, message: string, color?: keyof typeof TerminalColors, funcName?: string): void;
+    static custom(opt: {
+        type: string;
+        color?: keyof typeof TerminalColors;
+    }, message: string, funcName?: string): void;
 }
 
 declare function mimeType(fileName: string): "video/mp4" | "video/mpeg" | "video/webm" | "video/3gpp" | "video/x-matroska" | "video/x-msvideo" | "video/quicktime" | "video/x-ms-wmv" | "video/x-flv" | "video/x-m4v" | "audio/mpeg" | "audio/mp4" | "audio/wav" | "audio/ogg" | "audio/aac" | "audio/flac" | "audio/alac" | "image/jpeg" | "image/png" | "image/gif" | "image/bmp" | "image/webp" | "image/svg+xml" | "image/x-icon" | "image/tiff" | "image/vnd.adobe.photoshop" | "application/postscript" | "application/x-indesign" | "image/x-raw" | "image/x-canon-cr2" | "image/x-nikon-nef" | "image/x-olympus-orf" | "image/x-panasonic-rw2" | "image/x-pentax-pef" | "image/x-sony-arw" | "image/x-adobe-dng" | "image/x-sigma-x3f" | "image/x-canon-cr3" | "image/heic" | "image/heif" | "image/avif" | "application/pdf" | "text/plain" | "text/html" | "text/css" | "application/javascript" | "application/json" | "application/xml" | "application/zip" | "application/x-rar-compressed" | "application/x-7z-compressed" | "application/octet-stream";

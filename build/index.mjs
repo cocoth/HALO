@@ -279,17 +279,16 @@ var Logger = class {
     this.log("DEBUG", message, funcName);
   }
   /**
-   * Custom logging function that allows specifying the type, message, color, and function name.
-   * @param type The type of log (e.g., "DEBUG", "WARN", "ERROR", "INFO", "SUCCESS").
-   * @param message The message to log.
-   * @param color Optional color for the log.
-   * @param funcName Optional function name for context.
+   * Custom log method that allows specifying a type and color.
+   * @param opt - Options for the custom log.
+   * @param message - The message to log.
+   * @param funcName - Optional function name for context.
    */
-  static custom(type, message, color, funcName) {
-    const logColor = color || "CYAN";
+  static custom(opt, message, funcName) {
+    const logColor = opt.color || "CYAN";
     const functionName = funcName ? `funcName: ${funcName}` : "";
     const currentTime = Time.getTimeToLogFormat();
-    console.log(`${TerminalColors._dim}[${currentTime}]${TerminalColors._reset} ${TerminalColors[logColor]}[${type}]${TerminalColors._reset} ${functionName}: ${message}`);
+    console.log(`${TerminalColors._dim}[${currentTime}]${TerminalColors._reset} ${TerminalColors[logColor]}[${opt.type}]${TerminalColors._reset} ${functionName}: ${message}`);
   }
 };
 
