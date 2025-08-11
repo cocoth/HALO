@@ -689,38 +689,140 @@ declare class IOF {
 /**
  * Utility functions for terminal colors.
  * These functions provide ANSI escape codes for styling terminal output.
- * @module terminalColors
+ * @module TerminalColors
  * This module exports an object containing ANSI escape codes for various text styles and colors.
  * You can use these codes to format terminal output in Node.js applications.
  * @example
- * import { terminalColors as TC } from 'halo';
- * console.log(`${TC.R}This text is red${TC.reset}`);
+ * import { TerminalColors as TC } from '@/shared/utils/colors';
+ * console.log(`${TC.RED}This text is red${TC._reset}`);
  * @see {@link https://en.wikipedia.org/wiki/ANSI_escape_code} for more information
  */
-declare const terminalColors: {
-    reset: string;
-    bright: string;
-    dim: string;
-    underscore: string;
-    blink: string;
-    reverse: string;
-    hidden: string;
-    BLK: string;
-    R: string;
-    G: string;
-    Y: string;
-    B: string;
-    M: string;
-    C: string;
-    W: string;
-    BBLK: string;
-    BR: string;
-    BG: string;
-    BY: string;
-    BB: string;
-    BM: string;
-    BC: string;
-    BW: string;
+declare const TerminalColors: {
+    /**
+     * reset - Resets all styles and colors to default.
+     * This code is used to reset the terminal text formatting to its default state.
+     */
+    _reset: string;
+    /**
+     * bright - Makes the text bright.
+     * This code is used to make the terminal text bright or bold.
+     */
+    _bright: string;
+    /**
+     * dim - Makes the text dim.
+     * This code is used to make the terminal text dim or less bright.
+     */
+    _dim: string;
+    /**
+     * italic - Makes the text italic.
+     * This code is used to make the terminal text italicized.
+     */
+    _italic: string;
+    /**
+     * underline - Underlines the text.
+     * This code is used to underline the terminal text.
+     */
+    _underline: string;
+    /**
+     * blink - Makes the text blink.
+     * This code is used to make the terminal text blink.
+     */
+    _blink: string;
+    /**
+     * reverse - Reverses the foreground and background colors.
+     * This code is used to swap the foreground and background colors of the terminal text.
+     */
+    _reverse: string;
+    /**
+     * hidden - Hides the text.
+     * This code is used to hide the terminal text, making it invisible.
+     */
+    _hidden: string;
+    /**
+     * strikethrough - Strikes through the text.
+     * This code is used to add a strikethrough effect to the terminal text.
+     */
+    _strikethrough: string;
+    /**
+     * BLACK - Sets the text color to black.
+     * This code is used to change the terminal text color to black.
+     */
+    BLACK: string;
+    /**
+     * RED - Sets the text color to red.
+     * This code is used to change the terminal text color to red.
+     */
+    RED: string;
+    /**
+     * GREEN - Sets the text color to green.
+     * This code is used to change the terminal text color to green.
+     */
+    GREEN: string;
+    /**
+     * YELLOW - Sets the text color to yellow.
+     * This code is used to change the terminal text color to yellow.
+     */
+    YELLOW: string;
+    /**
+     * BLUE - Sets the text color to blue.
+     * This code is used to change the terminal text color to blue.
+     */
+    BLUE: string;
+    /**
+     * MAGENTA - Sets the text color to magenta.
+     * This code is used to change the terminal text color to magenta.
+     */
+    MAGENTA: string;
+    /**
+     * CYAN - Sets the text color to cyan.
+     * This code is used to change the terminal text color to cyan.
+     */
+    CYAN: string;
+    /**
+     * WHITE - Sets the text color to white.
+     * This code is used to change the terminal text color to white.
+     */
+    WHITE: string;
+    /**
+     * BBLACK - Sets the text color to bright black (gray).
+     * This code is used to change the terminal text color to bright black.
+     */
+    BBLACK: string;
+    /**
+     * BRED - Sets the background color to bright red.
+     * This code is used to change the terminal background color to bright red.
+     */
+    BRED: string;
+    /**
+     * BGREEN - Sets the background color to bright green.
+     * This code is used to change the terminal background color to bright green.
+     */
+    BGREEN: string;
+    /**
+     * BYELLOW - Sets the background color to bright yellow.
+     * This code is used to change the terminal background color to bright yellow.
+     */
+    BYELLOW: string;
+    /**
+     * BBLUE - Sets the background color to bright blue.
+     * This code is used to change the terminal background color to bright blue.
+     */
+    BBLUE: string;
+    /**
+     * BMAGENTA - Sets the background color to bright magenta.
+     * This code is used to change the terminal background color to bright magenta.
+     */
+    BMAGENTA: string;
+    /**
+     * BCYAN - Sets the background color to bright cyan.
+     * This code is used to change the terminal background color to bright cyan.
+     */
+    BCYAN: string;
+    /**
+     * BWHITE - Sets the background color to bright white.
+     * This code is used to change the terminal background color to bright white.
+     */
+    BWHITE: string;
 };
 
 declare function HashWithSHA256(data: string): string;
@@ -734,7 +836,14 @@ declare class Logger {
     static warn(message: string, funcName?: string): void;
     static info(message: string, funcName?: string): void;
     static debug(message: string, funcName?: string): void;
-    static custom(type: string, message: string, funcName?: string): void;
+    /**
+     * Custom logging function that allows specifying the type, message, color, and function name.
+     * @param type The type of log (e.g., "DEBUG", "WARN", "ERROR", "INFO", "SUCCESS").
+     * @param message The message to log.
+     * @param color Optional color for the log.
+     * @param funcName Optional function name for context.
+     */
+    static custom(type: string, message: string, color?: keyof typeof TerminalColors, funcName?: string): void;
 }
 
 declare function mimeType(fileName: string): "video/mp4" | "video/mpeg" | "video/webm" | "video/3gpp" | "video/x-matroska" | "video/x-msvideo" | "video/quicktime" | "video/x-ms-wmv" | "video/x-flv" | "video/x-m4v" | "audio/mpeg" | "audio/mp4" | "audio/wav" | "audio/ogg" | "audio/aac" | "audio/flac" | "audio/alac" | "image/jpeg" | "image/png" | "image/gif" | "image/bmp" | "image/webp" | "image/svg+xml" | "image/x-icon" | "image/tiff" | "image/vnd.adobe.photoshop" | "application/postscript" | "application/x-indesign" | "image/x-raw" | "image/x-canon-cr2" | "image/x-nikon-nef" | "image/x-olympus-orf" | "image/x-panasonic-rw2" | "image/x-pentax-pef" | "image/x-sony-arw" | "image/x-adobe-dng" | "image/x-sigma-x3f" | "image/x-canon-cr3" | "image/heic" | "image/heif" | "image/avif" | "application/pdf" | "text/plain" | "text/html" | "text/css" | "application/javascript" | "application/json" | "application/xml" | "application/zip" | "application/x-rar-compressed" | "application/x-7z-compressed" | "application/octet-stream";
@@ -1001,4 +1110,4 @@ declare class AgentSession {
     private resumeJSONFileSession;
 }
 
-export { AgentSession, AiAgent, type AiAgentConfig, type AtLeastOne, type ChatBuilder, type ConversationDB, type FileDownloadInterface, type FileInterface, type FileStorageInterface, GenerateRandomString, GenerateUUID, HashWithSHA256, IOF, type InlineData, Logger, type LooseToStrict, type ModelID, type OnlyOne, type SessionResult, type StartChatResult, TaskHandler, terminal as Terminal, Time, Tools, type UserBase, mimeType, terminalColors };
+export { AgentSession, AiAgent, type AiAgentConfig, type AtLeastOne, type ChatBuilder, type ConversationDB, type FileDownloadInterface, type FileInterface, type FileStorageInterface, GenerateRandomString, GenerateUUID, HashWithSHA256, IOF, type InlineData, Logger, type LooseToStrict, type ModelID, type OnlyOne, type SessionResult, type StartChatResult, TaskHandler, terminal as Terminal, TerminalColors, Time, Tools, type UserBase, mimeType };

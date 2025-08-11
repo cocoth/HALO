@@ -5,30 +5,134 @@ var __export = (target, all) => {
 };
 
 // src/utils/colors.ts
-var terminalColors = {
-  reset: "\x1B[0m",
-  bright: "\x1B[1m",
-  dim: "\x1B[2m",
-  underscore: "\x1B[4m",
-  blink: "\x1B[5m",
-  reverse: "\x1B[7m",
-  hidden: "\x1B[8m",
-  BLK: "\x1B[30m",
-  R: "\x1B[31m",
-  G: "\x1B[32m",
-  Y: "\x1B[33m",
-  B: "\x1B[34m",
-  M: "\x1B[35m",
-  C: "\x1B[36m",
-  W: "\x1B[37m",
-  BBLK: "\x1B[40m",
-  BR: "\x1B[41m",
-  BG: "\x1B[42m",
-  BY: "\x1B[43m",
-  BB: "\x1B[44m",
-  BM: "\x1B[45m",
-  BC: "\x1B[46m",
-  BW: "\x1B[47m"
+var TerminalColors = {
+  /**
+   * reset - Resets all styles and colors to default.
+   * This code is used to reset the terminal text formatting to its default state.
+   */
+  _reset: "\x1B[0m",
+  /**
+   * bright - Makes the text bright.
+   * This code is used to make the terminal text bright or bold.
+   */
+  _bright: "\x1B[1m",
+  /**
+   * dim - Makes the text dim.
+   * This code is used to make the terminal text dim or less bright.
+   */
+  _dim: "\x1B[2m",
+  /**
+   * italic - Makes the text italic.
+   * This code is used to make the terminal text italicized.
+   */
+  _italic: "\x1B[3m",
+  /**
+   * underline - Underlines the text.
+   * This code is used to underline the terminal text.
+   */
+  _underline: "\x1B[4m",
+  /**
+   * blink - Makes the text blink.
+   * This code is used to make the terminal text blink.
+   */
+  _blink: "\x1B[5m",
+  /**
+   * reverse - Reverses the foreground and background colors.
+   * This code is used to swap the foreground and background colors of the terminal text.
+   */
+  _reverse: "\x1B[7m",
+  /**
+   * hidden - Hides the text.
+   * This code is used to hide the terminal text, making it invisible.
+   */
+  _hidden: "\x1B[8m",
+  /**
+   * strikethrough - Strikes through the text.
+   * This code is used to add a strikethrough effect to the terminal text.
+   */
+  _strikethrough: "\x1B[9m",
+  // Foreground colors
+  /**
+   * BLACK - Sets the text color to black.
+   * This code is used to change the terminal text color to black.
+   */
+  BLACK: "\x1B[30m",
+  /**
+   * RED - Sets the text color to red.
+   * This code is used to change the terminal text color to red.
+   */
+  RED: "\x1B[31m",
+  /**
+   * GREEN - Sets the text color to green.
+   * This code is used to change the terminal text color to green.
+   */
+  GREEN: "\x1B[32m",
+  /**
+   * YELLOW - Sets the text color to yellow.
+   * This code is used to change the terminal text color to yellow.
+   */
+  YELLOW: "\x1B[33m",
+  /**
+   * BLUE - Sets the text color to blue.
+   * This code is used to change the terminal text color to blue.
+   */
+  BLUE: "\x1B[34m",
+  /**
+   * MAGENTA - Sets the text color to magenta.
+   * This code is used to change the terminal text color to magenta.
+   */
+  MAGENTA: "\x1B[35m",
+  /**
+   * CYAN - Sets the text color to cyan.
+   * This code is used to change the terminal text color to cyan.
+   */
+  CYAN: "\x1B[36m",
+  /**
+   * WHITE - Sets the text color to white.
+   * This code is used to change the terminal text color to white.
+   */
+  WHITE: "\x1B[37m",
+  // Bright foreground colors
+  /**
+   * BBLACK - Sets the text color to bright black (gray).
+   * This code is used to change the terminal text color to bright black.
+   */
+  BBLACK: "\x1B[40m",
+  /**
+   * BRED - Sets the background color to bright red.
+   * This code is used to change the terminal background color to bright red.
+   */
+  BRED: "\x1B[41m",
+  /**
+   * BGREEN - Sets the background color to bright green.
+   * This code is used to change the terminal background color to bright green.
+   */
+  BGREEN: "\x1B[42m",
+  /**
+   * BYELLOW - Sets the background color to bright yellow.
+   * This code is used to change the terminal background color to bright yellow.
+   */
+  BYELLOW: "\x1B[43m",
+  /**
+   * BBLUE - Sets the background color to bright blue.
+   * This code is used to change the terminal background color to bright blue.
+   */
+  BBLUE: "\x1B[44m",
+  /**
+   * BMAGENTA - Sets the background color to bright magenta.
+   * This code is used to change the terminal background color to bright magenta.
+   */
+  BMAGENTA: "\x1B[45m",
+  /**
+   * BCYAN - Sets the background color to bright cyan.
+   * This code is used to change the terminal background color to bright cyan.
+   */
+  BCYAN: "\x1B[46m",
+  /**
+   * BWHITE - Sets the background color to bright white.
+   * This code is used to change the terminal background color to bright white.
+   */
+  BWHITE: "\x1B[47m"
 };
 
 // src/utils/time.ts
@@ -147,17 +251,17 @@ var Time = class _Time {
 var Logger = class {
   static log(type, message, funcName) {
     const colorMap = {
-      DEBUG: terminalColors.M,
-      WARN: terminalColors.BY,
-      ERROR: terminalColors.R,
-      INFO: terminalColors.B,
-      SUCCESS: terminalColors.G
+      DEBUG: TerminalColors.MAGENTA,
+      WARN: TerminalColors.BYELLOW,
+      ERROR: TerminalColors.RED,
+      INFO: TerminalColors.BLUE,
+      SUCCESS: TerminalColors.GREEN
     };
-    const color = colorMap[type] || terminalColors.reset;
+    const color = colorMap[type] || TerminalColors._reset;
     const currentTime = Time.getTimeToLogFormat();
     const functionName = funcName ? `funcName: ${funcName}` : "";
     const logMethod = type === "ERROR" || type === "WARN" ? console.log : type === "INFO" ? console.info : console.log;
-    logMethod(`${terminalColors.dim}[${currentTime}]${terminalColors.reset} ${color}[${type}]${terminalColors.reset} ${functionName}: ${message}`);
+    logMethod(`${TerminalColors._dim}[${currentTime}]${TerminalColors._reset} ${color}[${type}]${TerminalColors._reset} ${functionName}: ${message}`);
   }
   static success(message, funcName) {
     this.log("SUCCESS", message, funcName);
@@ -174,10 +278,18 @@ var Logger = class {
   static debug(message, funcName) {
     this.log("DEBUG", message, funcName);
   }
-  static custom(type, message, funcName) {
+  /**
+   * Custom logging function that allows specifying the type, message, color, and function name.
+   * @param type The type of log (e.g., "DEBUG", "WARN", "ERROR", "INFO", "SUCCESS").
+   * @param message The message to log.
+   * @param color Optional color for the log.
+   * @param funcName Optional function name for context.
+   */
+  static custom(type, message, color, funcName) {
+    const logColor = color || "CYAN";
     const functionName = funcName ? `funcName: ${funcName}` : "";
     const currentTime = Time.getTimeToLogFormat();
-    console.log(`${terminalColors.dim}[${currentTime}]${terminalColors.reset} ${terminalColors.C}[${type}]${terminalColors.reset} ${functionName}: ${message}`);
+    console.log(`${TerminalColors._dim}[${currentTime}]${TerminalColors._reset} ${TerminalColors[logColor]}[${type}]${TerminalColors._reset} ${functionName}: ${message}`);
   }
 };
 
@@ -1434,10 +1546,10 @@ export {
   Logger,
   TaskHandler,
   terminal_exports as Terminal,
+  TerminalColors,
   Time,
   Tools,
   mimeType,
-  terminalColors,
   tool2 as tool
 };
 //# sourceMappingURL=index.mjs.map
